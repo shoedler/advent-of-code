@@ -2,7 +2,7 @@
   "compilerOptions": {
     "noImplicitAny": true,
     "moduleResolution": "node",
-    "target": "ESNext",
+    "target": "esnext",
   },
   "include": ["./**/*"],
   "exclude": ["node_modules", "**/*.spec.ts"]
