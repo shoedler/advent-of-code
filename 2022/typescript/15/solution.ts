@@ -10,7 +10,7 @@ const report = fs.readFileSync('./input.txt', 'utf-8').split('\r\n')
     const posBeacon = /x=(-?\d+),\s+y=(-?\d+)/g.exec(right);
     const beacon: Vec = { x: Number(posBeacon[1]), y: Number(posBeacon[2]) };
     const sensor: VecD = { x: Number(posSensor[1]), y: Number(posSensor[2]), dist: 0 }
-    
+
     sensor.dist = Math.abs(beacon.x-sensor.x) + Math.abs(beacon.y-sensor.y);
 
     return { sensor, beacon };
@@ -65,12 +65,10 @@ const freqOfDistressBeacon = (): bigint => {
   }
 };
 
-
 console.log("Part One", invalidPositionsAtRow(2e6)); // 5125700
 console.log("Part Two", freqOfDistressBeacon()); // 11379394658764
 
-
-// ↓ This was used to find a smart way to build the sqare with d+1 in a smart way -- without luck 😂
+// ↓ This was used to find a smart way to build the square-border of a sensor with d+1 -- without luck 😂
 
 // // Test data
 // const xSensor = 3;
