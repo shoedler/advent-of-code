@@ -43,70 +43,60 @@ const invalidPositionsAtRow = (yValue: number) => {
 const freqOfDistressBeacon = (): bigint => {
   for (let i = 0; i < sensors.length; i++) {
     const { x: xSensor, y: ySensor, dist: nearestBeacon } = sensors[i];
-  
-    const border: Vec[] = [];
-    
-    let dy = ySensor;
-    for (let dx = (xSensor - nearestBeacon - 1); dx < xSensor; dx++)  border.push({ x: dx, y: dy-- }); dy = ySensor; // left -> bottom (exclusive)
-    for (let dx = (xSensor - nearestBeacon - 1); dx < xSensor; dx++)  border.push({ x: dx, y: dy++ }); dy = ySensor; // left -> top (exclusive)
-    for (let dx = (xSensor + nearestBeacon + 1); dx >= xSensor; dx--) border.push({ x: dx, y: dy-- }); dy = ySensor; // right -> bottom (inclusive)
-    for (let dx = (xSensor + nearestBeacon + 1); dx >= xSensor; dx--) border.push({ x: dx, y: dy++ });               // right -> top (inclusive)
-  
-    for (let j = 0; j < border.length; j++) {
-      const { x, y } = border[j];
-  
-      if (x < 0 || x > 4e6 || y < 0 || y > 4e6) 
-        continue;
-      
-      if (isValidBeaconPosition(border[j])) {
+
+    const isDistressBeacon = (vec: Vec): bigint | false => {
+      const { x, y } = vec;
+
+      if (x < 0 || x > 4e6 || y < 0 || y > 4e6)
+        return false;
+
+      if (isValidBeaconPosition(vec)) {
         return BigInt(x) * 4_000_000n + BigInt(y);
       }
+    }
+
+    let dy = ySensor;
+    // left -> bottom (exclusive)
+    for (let dx = (xSensor - nearestBeacon - 1); dx < xSensor; dx++) {
+      var result = isDistressBeacon({ x: dx, y: dy-- });
+      if (result)
+        return result;
+    }
+
+    // left -> top (exclusive)
+    dy = ySensor;
+    for (let dx = (xSensor - nearestBeacon - 1); dx < xSensor; dx++) {
+      var result = isDistressBeacon({ x: dx, y: dy++ });
+      if (result)
+        return result;
+    }
+
+    // right -> bottom (inclusive)
+    dy = ySensor;
+    for (let dx = (xSensor + nearestBeacon + 1); dx >= xSensor; dx--) {
+      var result = isDistressBeacon({ x: dx, y: dy-- });
+      if (result)
+        return result;
+    }
+
+    // right -> top (inclusive)
+    dy = ySensor;
+    for (let dx = (xSensor + nearestBeacon + 1); dx >= xSensor; dx--) {
+      var result = isDistressBeacon({ x: dx, y: dy++ });
+      if (result)
+        return result;
     }
   }
 };
 
-console.log("Part One", invalidPositionsAtRow(2e6)); // 5125700
-console.log("Part Two", freqOfDistressBeacon()); // 11379394658764
+let t = Date.now();
+const invalidPositions = invalidPositionsAtRow(2e6);
+const invalidPoistionsTimeMs = Date.now() - t;
 
-// ↓ This was used to find a smart way to build the square-border of a sensor with d+1 -- without luck 😂
+t = Date.now();
+const freq = freqOfDistressBeacon();
+const freqTimeMs =  Date.now() - t;
 
-// // Test data
-// const xSensor = 3;
-// const ySensor = 3;
-// const nearestBeacon = 1;
-// const border: {x: number, y:number}[] = [];
-
-// // // Version 1
-// // let dy = ySensor;
-// // for (let dx = (xSensor - nearestBeacon - 1); dx < xSensor; dx++) border.push({ x: dx, y: dy-- });
-// // dy = ySensor;
-// // for (let dx = (xSensor - nearestBeacon - 1); dx < xSensor; dx++) border.push({ x: dx, y: dy++ });
-// // dy = ySensor;
-// // for (let dx = (xSensor + nearestBeacon + 1); dx >= xSensor; dx--) border.push({ x: dx, y: dy-- });
-// // dy = ySensor;
-// // for (let dx = (xSensor + nearestBeacon + 1); dx >= xSensor; dx--) border.push({ x: dx, y: dy++ });
-
-// // Version 2
-// for (let dx = (xSensor - nearestBeacon - 1); dx < xSensor; dx++) {
-//   let dy = (dx - xSensor ) + ySensor;
-//   border.push({ x: dx, y: ySensor - dy }, { x: dx, y: ySensor + dy });
-// }
-
-// // Version 3
-// for (let dx = (xSensor + nearestBeacon + 1); dx >= xSensor; dx--) {
-//   let dy = (dx - xSensor) + ySensor;
-//   let dy2 = ySensor - (dx - xSensor);
-//   border.push({ x: dx, y: dy }, { x: dx, y: dy2 });
-// }
-
-// // Print Manhattan Square
-// let str = "";
-// for (let y = 0; y <= 6; y++) {
-//   for (let x = 0; x <= 6; x++) {
-//     str += border.findIndex(b => b.x === x && b.y === y) == -1? '--' : '██';
-//   }
-//   str += '\n';
-// }
-
-// console.log(str);
-
+// Config i7-11800H @ 2.3Ghz, 32GB RAM node v16.13.2
+console.log("Part One", invalidPositions, `took ${invalidPoistionsTimeMs}ms`); // 5125700 took 494ms
+console.log("Part Two", freq, `took ${freqTimeMs}ms`); // 11379394658764n took 248ms
