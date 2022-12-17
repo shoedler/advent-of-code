@@ -64,6 +64,12 @@ const nudgeRight = (shape: number): number => {
   return nudgedSlice;
 }
 
+const setCharAt = (str: string, index: number, char: string): string => {
+  if (index > str.length-1)
+    return str;
+  return str.substring(0,index) + char + str.substring(index+1);
+}
+
 const nudgeLeft = (shape: number): number => {
   let sliceIndex = 0;
   let slice = 0;
@@ -80,11 +86,11 @@ const nudgeLeft = (shape: number): number => {
   return nudgedSlice;
 }
 
-const collides = (shape: number, chamberIndex: number, chamber: number[]) => {
+const collides = (shape: number, chamberIndex: number, chamber: string) => {
   const shapeSize = getShapeSize(shape);
   for (let i = chamberIndex; i < (chamberIndex + shapeSize); i++) {
     const shapeSlice = getShapeSlice(shape, i - chamberIndex);
-    const chamberSlice = chamber[i];
+    const chamberSlice = chamber.charCodeAt(i);
     
     if (i > chamber.length - 1)
       return false;
@@ -94,26 +100,26 @@ const collides = (shape: number, chamberIndex: number, chamber: number[]) => {
   return false;
 }
 
-const merge = (shape: number, chamberIndex: number, chamber: number[]): number[] => {
+const merge = (shape: number, chamberIndex: number, chamber: string): string => {
   const shapeSize = getShapeSize(shape);
 
   for (let i = chamberIndex; i < (chamberIndex + shapeSize); i++) {
     const shapeSlice = getShapeSlice(shape, i - chamberIndex);
     
     if (chamber[i] === undefined) {
-      chamber[i] = shapeSlice; // Extend the chamber
+      chamber += String.fromCharCode(shapeSlice);
     }
     else 
-      chamber[i] |= shapeSlice;
+      chamber = setCharAt(chamber, i, String.fromCharCode(shapeSlice | chamber.charCodeAt(i)));
   }
 
   return chamber;
 }
 
+let chamber: string = '';
 const simulate = (iterations: number) => {
   let count = 0;
   let cmdPtr = 0;
-  const chamber: number[] = []
 
   const nextCommand = () => commands[cmdPtr++ % commands.length];
   
@@ -144,24 +150,25 @@ const simulate = (iterations: number) => {
       y--;
 
       if (collides(shape, y, chamber) || y < 0) {
-        merge(shape, y+1, chamber);
+        chamber = merge(shape, y+1, chamber);
         break;
       }
     }
   }
 
-  return chamber;
 }
 
 // Config i7-11800H @ 2.3Ghz, 32GB RAM node v16.13.2
 let t = Date.now();
-const chamber2022Iters = simulate(2022);
+chamber = '';
+simulate(2022);
 const chamber2022ItersTimeMs = Date.now() - t;
 
-console.log("Part One", chamber2022Iters.length, `took ${chamber2022ItersTimeMs}ms`); // 3098 took 20ms, 2ms after running it 10 times consecutively
+console.log("Part One", chamber.length, `took ${chamber2022ItersTimeMs}ms`); // 3098 took 20ms, 2ms after running it 10 times consecutively
 
 t = Date.now();
-const chamber1e12Iters = simulate(1_000_000_000_000);
+chamber = '';
+simulate(1_000_000_000_000);
 const chamber1e12ItersTimeMs = Date.now() - t;
 
-console.log("Part Two", chamber1e12Iters.length, `took ${chamber1e12ItersTimeMs}ms`); // approx. 11 days 
+console.log("Part Two", chamber.length, `took ${chamber1e12ItersTimeMs}ms`); // approx. 11 days 
