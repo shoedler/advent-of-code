@@ -64,12 +64,6 @@ const nudgeRight = (shape: number): number => {
   return nudgedSlice;
 }
 
-const setCharAt = (str: string, index: number, char: string): string => {
-  if (index > str.length-1)
-    return str;
-  return str.substring(0,index) + char + str.substring(index+1);
-}
-
 const nudgeLeft = (shape: number): number => {
   let sliceIndex = 0;
   let slice = 0;
@@ -86,11 +80,11 @@ const nudgeLeft = (shape: number): number => {
   return nudgedSlice;
 }
 
-const collides = (shape: number, chamberIndex: number, chamber: string) => {
+const collides = (shape: number, chamberIndex: number, chamber: number[]) => {
   const shapeSize = getShapeSize(shape);
   for (let i = chamberIndex; i < (chamberIndex + shapeSize); i++) {
     const shapeSlice = getShapeSlice(shape, i - chamberIndex);
-    const chamberSlice = chamber.charCodeAt(i);
+    const chamberSlice = chamber[i];
     
     if (i > chamber.length - 1)
       return false;
@@ -100,31 +94,49 @@ const collides = (shape: number, chamberIndex: number, chamber: string) => {
   return false;
 }
 
-const merge = (shape: number, chamberIndex: number, chamber: string): string => {
+const merge = (shape: number, chamberIndex: number, chamber: number[]): number[] => {
   const shapeSize = getShapeSize(shape);
 
   for (let i = chamberIndex; i < (chamberIndex + shapeSize); i++) {
     const shapeSlice = getShapeSlice(shape, i - chamberIndex);
     
     if (chamber[i] === undefined) {
-      chamber += String.fromCharCode(shapeSlice);
+      chamber[i] = shapeSlice; // Extend the chamber
     }
     else 
-      chamber = setCharAt(chamber, i, String.fromCharCode(shapeSlice | chamber.charCodeAt(i)));
+      chamber[i] |= shapeSlice;
   }
 
   return chamber;
 }
 
-let chamber: string = '';
-const simulate = (iterations: number) => {
-  let count = 0;
-  let cmdPtr = 0;
+const getTopView = (chamber: number[]) => {
+  const mins = new Array(WIDTH).fill(-Infinity);
+  for (let y = chamber.length - 1; y >= 0; y--) {
+    const slice = chamber[y];
+    for (let x = 0; x < WIDTH; x++) {
+      if ((slice & (0b1 << x)) !== 0) {
+        mins[x] = chamber.length - y;
+      }
+    }
+    if (mins.every(m => m !== -Infinity)) {
+      break;
+    }
+  }
+  return mins;
+}
 
-  const nextCommand = () => commands[cmdPtr++ % commands.length];
+const simulate = (targetShapeCount: number) => {
+  let shapeCount = 0;
+  let cmdCount = 0;
+  const chamber: number[] = []
+  let cache: { [key: string]: { prevShapeCount: number, prevMaxY: number } } = {}
+
+  const nextCommand = () => commands[cmdCount++ % commands.length];
   
-  while (count < iterations) {
-    let shape = shapes[count++ % 5];
+let add = 0;
+  while (shapeCount < targetShapeCount) {
+    let shape = shapes[shapeCount++ % shapes.length];
   
     // Simulate the shape moving left and right in the defined void
     for (let i = 0; i < SHAPE_PAD;  i++) {
@@ -150,25 +162,53 @@ const simulate = (iterations: number) => {
       y--;
 
       if (collides(shape, y, chamber) || y < 0) {
-        chamber = merge(shape, y+1, chamber);
+        merge(shape, y+1, chamber);
+
+        if (chamber.length > 2000) {
+          const topView = getTopView(chamber);
+          const shapePtr = (shapeCount-1) % shapes.length;
+          const cmdPtr = (cmdCount-1) % commands.length;
+          const cacheKey = shapePtr.toString() + topView.join(',') + cmdPtr.toString();
+
+          if (cache[cacheKey]) {
+            const { prevShapeCount, prevMaxY } = cache[cacheKey];
+
+            // How many times do I need to multiply the found pattern length to get to the target iteration?
+            const quot = Math.floor((targetShapeCount - shapeCount) / (shapeCount - prevShapeCount));
+
+            shapeCount += (quot * (shapeCount - prevShapeCount));
+
+            const patternLength = chamber.length - prevMaxY;
+            const chamberExpansion = quot * patternLength;
+
+            console.log(chamberExpansion, shapeCount)
+            add = chamberExpansion;
+            cache = {};
+          } 
+          else {
+            cache[cacheKey] = { prevShapeCount: shapeCount, prevMaxY: chamber.length };
+          }
+        }
         break;
       }
     }
   }
 
+  return chamber.length + add;
 }
 
 // Config i7-11800H @ 2.3Ghz, 32GB RAM node v16.13.2
 let t = Date.now();
-chamber = '';
-simulate(2022);
+const chamber2022Iters = simulate(2022);
 const chamber2022ItersTimeMs = Date.now() - t;
 
-console.log("Part One", chamber.length, `took ${chamber2022ItersTimeMs}ms`); // 3098 took 20ms, 2ms after running it 10 times consecutively
+console.log("Part One", chamber2022Iters, `took ${chamber2022ItersTimeMs}ms`); // 3098 took 11ms
 
 t = Date.now();
-chamber = '';
-simulate(1_000_000_000_000);
-const chamber1e12ItersTimeMs = Date.now() - t;
+const chamberTrillionIters = simulate(1_000_000_000_000); // 1e12 is a "Billion" in German.
+const chamberTrillionItersTimeMs = Date.now() - t;
 
-console.log("Part Two", chamber.length, `took ${chamber1e12ItersTimeMs}ms`); // approx. 11 days 
+console.log("Part Two", chamberTrillionIters, `took ${chamberTrillionItersTimeMs}ms`); // 1525364431487 took 10ms
+
+
+1514285714288
