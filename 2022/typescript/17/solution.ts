@@ -40,14 +40,6 @@ const getShapeSize = (shape: number): number =>
   shape <= (MASK_ALL << 21) ? 4 :
   undefined;
 
-const printShape = (shape: number) => {
-  let sliceIndex = 0;
-  let slice = 0;
-  while ((slice = getShapeSlice(shape, sliceIndex++)) > 0) {
-    console.log(slice.toString(2).padStart(WIDTH, '0').split('').map(c => c === '1' ? '#' : '.').join(''));
-  }
-}
-
 const nudgeRight = (shape: number): number => {
   let sliceIndex = 0;
   let slice = 0;
@@ -113,9 +105,9 @@ const merge = (shape: number, chamberIndex: number, chamber: number[]): number[]
 const getTopView = (chamber: number[]) => {
   const mins = new Array(WIDTH).fill(-Infinity);
   for (let y = chamber.length - 1; y >= 0; y--) {
-    const slice = chamber[y];
+    const chamberSlice = chamber[y];
     for (let x = 0; x < WIDTH; x++) {
-      if ((slice & (0b1 << x)) !== 0) {
+      if ((chamberSlice & (0b1 << x)) !== 0) {
         mins[x] = chamber.length - y;
       }
     }
@@ -129,12 +121,12 @@ const getTopView = (chamber: number[]) => {
 const simulate = (targetShapeCount: number) => {
   let shapeCount = 0;
   let cmdCount = 0;
+  let chamberPatternMatchExpansion = 0;
   const chamber: number[] = []
   let cache: { [key: string]: { prevShapeCount: number, prevMaxY: number } } = {}
 
   const nextCommand = () => commands[cmdCount++ % commands.length];
   
-let add = 0;
   while (shapeCount < targetShapeCount) {
     let shape = shapes[shapeCount++ % shapes.length];
   
@@ -168,22 +160,23 @@ let add = 0;
           const topView = getTopView(chamber);
           const shapePtr = (shapeCount-1) % shapes.length;
           const cmdPtr = (cmdCount-1) % commands.length;
-          const cacheKey = shapePtr.toString() + topView.join(',') + cmdPtr.toString();
+          const cacheKey = shapePtr.toString() + topView.join('') + cmdPtr.toString();
 
           if (cache[cacheKey]) {
             const { prevShapeCount, prevMaxY } = cache[cacheKey];
 
             // How many times do I need to multiply the found pattern length to get to the target iteration?
-            const quot = Math.floor((targetShapeCount - shapeCount) / (shapeCount - prevShapeCount));
+            const quot = ((targetShapeCount - shapeCount) / (shapeCount - prevShapeCount) >> 0); // As integer division
 
             shapeCount += (quot * (shapeCount - prevShapeCount));
 
+            // At this point shapeCount is close to targetShapeCount, so we store the chamberExpansion
+            // and just simulate the remaining few iterations
             const patternLength = chamber.length - prevMaxY;
-            const chamberExpansion = quot * patternLength;
+            chamberPatternMatchExpansion = quot * patternLength;
 
-            console.log(chamberExpansion, shapeCount)
-            add = chamberExpansion;
-            cache = {};
+            cache = {}; // Because we've matched a pattern, we'll match the same pattern again sometime and 
+            // it'll grow exponentially. So we clear the cache to avoid that.
           } 
           else {
             cache[cacheKey] = { prevShapeCount: shapeCount, prevMaxY: chamber.length };
@@ -193,11 +186,12 @@ let add = 0;
       }
     }
   }
-
-  return chamber.length + add;
+  
+  return chamber.length + chamberPatternMatchExpansion;
 }
 
-// Config i7-11800H @ 2.3Ghz, 32GB RAM node v16.13.2
+// Setup: i7-1065H, 16GB RAM node v17.8.0
+
 let t = Date.now();
 const chamber2022Iters = simulate(2022);
 const chamber2022ItersTimeMs = Date.now() - t;
@@ -208,7 +202,4 @@ t = Date.now();
 const chamberTrillionIters = simulate(1_000_000_000_000); // 1e12 is a "Billion" in German.
 const chamberTrillionItersTimeMs = Date.now() - t;
 
-console.log("Part Two", chamberTrillionIters, `took ${chamberTrillionItersTimeMs}ms`); // 1525364431487 took 10ms
-
-
-1514285714288
+console.log("Part Two", chamberTrillionIters, `took ${chamberTrillionItersTimeMs}ms`); // 1525364431487 took 8ms
