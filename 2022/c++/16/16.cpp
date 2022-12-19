@@ -12,20 +12,20 @@
 
 using namespace std;
 
-map<uint8_t, uint8_t> flow_rates;
-map<uint8_t, vector<uint8_t>> tunnels;
-map<string, uint8_t> valve_ids;
+map<uint64_t, int8_t> flow_rates;
+map<uint64_t, uint64_t> tunnels;
+map<string, uint64_t> valve_ids;
 
 void read_valves(const string& fileName) {
   ifstream input(fileName);
   string line;
-  auto valve_ctr = (uint8_t)0;
+  auto valve_ctr = 1ull;
 
   struct valvedef {
     string id;
-	uint8_t flow_rate;
+    int8_t flow_rate;
 	vector<string> tunnels;
-  uint8_t id_number;
+    uint64_t id_bitmask;
   };
 
   vector<valvedef> valve_defs;
@@ -37,7 +37,7 @@ void read_valves(const string& fileName) {
 
     if (matches.size() > 0) {
 	  auto valve_id = matches[1].str();
-	  auto flow_rate = (uint8_t)stoi(matches[2].str());
+	  auto flow_rate = (int8_t)stoi(matches[2].str());
 	  auto tunnel_ids = matches[3].str();
 
 	  istringstream tunnel_idss(tunnel_ids);
@@ -52,45 +52,80 @@ void read_valves(const string& fileName) {
 
       valve_ids[valve_id] = valve_ctr;
 	  valve_defs.push_back({ valve_id, flow_rate, tunnels, valve_ctr });
-      valve_ctr++;
+      valve_ctr <<= 1;
     }
   }
-
+  
   for (const auto& v : valve_defs) {
-	flow_rates[v.id_number] = v.flow_rate;
+	flow_rates[v.id_bitmask] = v.flow_rate;
+    auto valve_tunnes = 0ull;
 	for (const auto& t : v.tunnels) {
-      tunnels[v.id_number].push_back(valve_ids[t]);
+      valve_tunnes |= valve_ids[t];
 	}
+    tunnels[v.id_bitmask] = valve_tunnes;
   }
+
+#ifdef _DEBUG
+  for (const auto& v : valve_defs) {
+    cout << "Valve " << v.id << " should have tunnels: ";
+    for (const auto& t : v.tunnels) {
+      cout << t << " ";
+    }
+    cout << endl;
+    cout << "Tunnels from bitmask:         ";
+    auto valve_tunnels = tunnels[v.id_bitmask];
+    
+    for (auto i = 0; i < 64; i++) {
+      const auto tunnel = 1ull << i;
+      if ((valve_tunnels & tunnel) != 0) {
+        for (const auto& v : valve_defs) {
+          if (v.id_bitmask == tunnel) {
+            cout << v.id << " ";
+          }
+        }
+      }
+    }
+
+    cout << endl;
+  }
+#endif
 }
 
-map<tuple<uint8_t, vector<uint8_t>, int8_t, uint8_t>, int64_t> cache;
+map<tuple<uint64_t, uint64_t, int8_t, uint8_t>, int64_t> cache;
 
-uint64_t max_relief(uint8_t valve, vector<uint8_t> opened_valves, int8_t minutes, uint8_t type = 1) {
+int64_t max_relief(uint64_t valve, uint64_t opened_valves, int8_t minutes, uint8_t type) {
   if (minutes <= 0) {
     return type == 1 ? 0 : max_relief(valve, opened_valves, 26, 1);
   }
- 
+
   const auto cache_key = make_tuple(valve, opened_valves, minutes, type);
   if (cache.find(cache_key) != cache.end()) {
     return cache[cache_key];
   }
 
   auto max_reliefed = 0ull;
+  const auto valve_tunnels = tunnels[valve];
+  const auto valve_flowrate = flow_rates[valve];
+  
+  if (valve_flowrate > 0 && (opened_valves & valve) == 0) {
+    const auto valve_relief = valve_flowrate * (minutes - 1);
+    opened_valves |= valve;
 
-  if (flow_rates[valve] > 0 && find(opened_valves.begin(), opened_valves.end(), valve) == opened_valves.end()) {
-    const auto valve_relief = flow_rates[valve] * (minutes - 1);
-    opened_valves.push_back(valve);
-
-    for (const auto& t : tunnels[valve]) {
-      const auto reliefed = valve_relief + max_relief(t, opened_valves, minutes - 2, type);
-      max_reliefed = reliefed > max_reliefed ? reliefed : max_reliefed;
+    for (auto i = 0; i < 64; i++) {
+      const auto tunnel = 1ull << i;
+      if ((valve_tunnels & tunnel) != 0) {
+        const auto reliefed = valve_relief + max_relief(tunnel, opened_valves, minutes - 2, type);
+        max_reliefed = reliefed > max_reliefed ? reliefed : max_reliefed;
+      }
     }
   }
   
-  for (const auto& t : tunnels[valve]) {
-    const auto reliefed = max_relief(t, opened_valves, minutes - 1, type);
-    max_reliefed = reliefed > max_reliefed ? reliefed : max_reliefed;
+  for (auto i = 0; i < 64; i++) {
+    const auto tunnel = 1ull << i;
+    if ((valve_tunnels & tunnel) != 0) {
+      const auto reliefed = max_relief(tunnel, opened_valves, minutes - 1, type);
+      max_reliefed = reliefed > max_reliefed ? reliefed : max_reliefed;
+    }
   }
 
   cache[cache_key] = max_reliefed;
@@ -118,8 +153,8 @@ void part_two() {
 int main() {
   read_valves("input.txt");
 
-  part_one(); // 1460 took 14644ms
-  part_two();
+  part_one(); // 1460 took 727ms
+  part_two(); // 2348 took 4107ms but it should be 2117.
 
   return 0;
 }
