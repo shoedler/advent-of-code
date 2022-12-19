@@ -191,7 +191,6 @@ const simulate = (targetShapeCount: number) => {
 }
 
 // Setup: i7-1065H, 16GB RAM node v17.8.0
-
 let t = Date.now();
 const chamber2022Iters = simulate(2022);
 const chamber2022ItersTimeMs = Date.now() - t;

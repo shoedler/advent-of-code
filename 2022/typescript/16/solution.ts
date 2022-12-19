@@ -29,7 +29,7 @@ Object.entries(valveDefs).forEach(([valveLabel, valve]) => {
 const memoize = (fn: (valve: number, opened: number[], minutesLeft: number, type: 'P1' | 'P2') => any) => {
   const cache: { [key:string]: any }  = {};
   return (valve: number, opened: number[], minutesLeft: number, type: 'P1' | 'P2') => {
-    const cacheKey = `${valve}|${opened.join('.')}|${minutesLeft}`
+    const cacheKey = `${valve}|${opened.join('.')}|${minutesLeft}|${type}`
 
     if (!cache[cacheKey]) {
       cache[cacheKey] = fn(valve, opened, minutesLeft, type)
@@ -45,21 +45,23 @@ const maxRelief = memoize((valve: number, opened: number[], minutesLeft: number,
       maxRelief(ValveIds['AA'], opened, 26, 'P1');
   }
 
-  const outcomes: number[] = [0];
+  let maxReliefed = 0;
 
   if (!opened.includes(valve) && Flowrates[valve] > 0) {
-    const reliefedPressure = (minutesLeft - 1) * Flowrates[valve];
+    const valveRelief = (minutesLeft - 1) * Flowrates[valve];
     Tunnels[valve].forEach(nextValve => {
-      outcomes.push(reliefedPressure + maxRelief(nextValve, opened.concat(valve), minutesLeft - 2, type))
+      const reliefed = valveRelief + maxRelief(nextValve, opened.concat(valve), minutesLeft - 2, type)
+      maxReliefed = reliefed > maxReliefed ? reliefed : maxReliefed;
     });
   }
 
   // Unopened
   Tunnels[valve].forEach(nextValve => {
-    outcomes.push(maxRelief(nextValve, opened, minutesLeft - 1, type))
+    const reliefed = maxRelief(nextValve, opened, minutesLeft - 1, type)
+    maxReliefed = reliefed > maxReliefed ? reliefed : maxReliefed;
   });
 
-  return Math.max(...outcomes);
+  return maxReliefed;
 });
 
 let t = Date.now();
