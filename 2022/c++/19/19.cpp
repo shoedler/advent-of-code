@@ -107,16 +107,16 @@ int run_blueprint(
   }
 
   // Cache, or read from cache
-  const auto cacheKey = make_tuple(blueprint.id, minutes, ore, clay, obsidian, geodes, ore_miners, clay_miners, obsidian_miners, geode_crackers);
+  const auto cache_key = make_tuple(blueprint.id, minutes, ore, clay, obsidian, geodes, ore_miners, clay_miners, obsidian_miners, geode_crackers);
   if (cache.size() % 1000000 == 0) {
     cout << ".";
   }
 
-  if (cache.count(cacheKey) > 0) {
-    return cache[cacheKey];
+  if (cache.count(cache_key) > 0) {
+    return cache[cache_key];
   }
 
-  cache[cacheKey] = geodes;
+  cache[cache_key] = geodes;
 
   // Simulate
   auto most_geodes = 0;
