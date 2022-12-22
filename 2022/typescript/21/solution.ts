@@ -29,7 +29,7 @@ const interpret = (val: Expr): number => {
 
 const findHumanValue = () => {
   const root = lookup['root'] as { left: string, op: string, right: string };
-  const sides: ['left', 'right'] = ['left', 'right'];
+  const rootBranches: ['left', 'right'] = ['left', 'right'];
   
   // Determine if we're left or right
   const probeLeft = [interpret(root.left) as number];
@@ -40,20 +40,20 @@ const findHumanValue = () => {
   probeLeft.push(interpret(root.left) as number);
   probeRight.push(interpret(root.right) as number);
   
-  const humnSide: 'left' | 'right' = 
-      !probeLeft.every(v => v === probeLeft[0]) ? sides.shift() 
-    : !probeRight.every(v => v === probeRight[0]) ? sides.pop() 
+  const humanBranch: 'left' | 'right' = 
+      !probeLeft.every(v => v === probeLeft[0]) ? rootBranches.shift() 
+    : !probeRight.every(v => v === probeRight[0]) ? rootBranches.pop() 
     : undefined;
-  const otherSide = sides[0];
+  const [ otherBranch ] = rootBranches;
 
   // Determine which side is larger
   const fn = probeLeft[0] > probeRight[0] ? 
-    () => interpret(root[humnSide]) - interpret(root[otherSide]) :
-    () => interpret(root[otherSide]) - interpret(root[humnSide]);
+    () => interpret(root[humanBranch]) - interpret(root[otherBranch]) :
+    () => interpret(root[otherBranch]) - interpret(root[humanBranch]);
   
   // Binary search
   let low = 0;
-  let high = 1e20;
+  let high = Number.MAX_SAFE_INTEGER;
   
   while (low < high) {
     const mid = (low + high) / 2

@@ -16,17 +16,17 @@ const commands = fs.readFileSync('./input.txt', 'utf-8')
 const simulate = (knotCount: number = 2) => {
   const knots: IntVec[] = new Array(knotCount).fill(0).map(_ => [0,0])
   const knotTailPositions = new Set<string>();
-  
+
   const storeKnotTail = () => 
     knotTailPositions.add(`${knots[knots.length-1][0]}|${knots[knots.length-1][1]}`)
-  
+
   const moveMany = (d: IntVec) => {
     knots[0] = sum(knots[0], d);
-  
+
     for (let i = 1; i < knots.length; i++) {
       let knotHead = knots[i-1];
       let knotTail = knots[i];
-  
+
       if (!sameOrNeighbor(knotHead, knotTail)) {
         const sX = absDx(knotHead, knotTail) === 0 ? 0 : diffX(knotHead, knotTail) / absDx(knotHead, knotTail);
         const sY = absDy(knotHead, knotTail) === 0 ? 0 : diffY(knotHead, knotTail) / absDy(knotHead, knotTail);
@@ -35,7 +35,7 @@ const simulate = (knotCount: number = 2) => {
       }
     }
   }
-  
+
   storeKnotTail();
   commands.forEach(([dir,val]) => {
     const d: IntVec = [dirs[dir][0], dirs[dir][1]]
