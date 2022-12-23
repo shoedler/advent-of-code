@@ -15,3 +15,5 @@ export class Hashset<K> {
   public items = (): K[] => Object.keys(this.hashes).map(e => JSON.parse(e));
   public size = (): number => Object.keys(this.hashes).length;
 }
+
+export const range = (from: number, to: number) => new Array(to-from).fill(0).map(_ => from++);
