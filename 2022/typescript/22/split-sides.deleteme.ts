@@ -8,19 +8,19 @@ let mapLines = mapDef.split('\r\n')
 const longestLine = Math.max(...mapLines.map(line => line.length));
 mapLines = mapLines.map(line => line.padEnd(longestLine, " "));
 
-const cubeSides: string[][][][] = [];
+const cubeRollup: string[][][][] = [];
+
 const CUBE_DIM = inputType === 'ext' ? 4 : 50;
+const CUBE_DEF_ROW_LEN = mapLines.length / CUBE_DIM;
+const CUBE_DEF_COL_LEN = mapLines[0].length / CUBE_DIM;
 
 // Build cube sides
-for (let i = 0; i < 4; i++) {
+for (let i = 0; i < CUBE_DEF_COL_LEN; i++) {
   const cubeSideRow: string[][][] = [];
-
-  for (let j = 0; j < 3; j++) {
+  for (let j = 0; j < CUBE_DEF_ROW_LEN; j++) {
     const cubeSide: string[][] = [];
-
     for (let ci = i*CUBE_DIM; ci < i*CUBE_DIM+CUBE_DIM; ci++) {
       const cubeSideRowRow: string[] = [];
-
       const line = mapLines[ci];
       for (let cj = j*CUBE_DIM; cj < j*CUBE_DIM+CUBE_DIM; cj++) {
         cubeSideRowRow.push(line[cj])
@@ -29,8 +29,10 @@ for (let i = 0; i < 4; i++) {
     }
     cubeSideRow.push(cubeSide)
   }
-  cubeSides.push(cubeSideRow);
+  cubeRollup.push(cubeSideRow);
 }
+
+console.log(cubeRollup);
 
 const rotateCw = (arr: any[][]) => {
   arr = JSON.parse(JSON.stringify(arr))
