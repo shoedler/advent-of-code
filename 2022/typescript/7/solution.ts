@@ -22,6 +22,14 @@ class Dir {
     fn(this);
     this.dirs.forEach(dir => dir.dfpt(fn))
   }
+
+  public prettyPrint = (indent: number = 0) => {
+    console.log(`${' '.repeat(indent)}📁 ${this.name}` )
+    this.files.forEach(file => {
+      console.log(`${' '.repeat(indent + 1)}📰 ${file[1]} size ${file[0]}` )
+    })
+    this.dirs.forEach(dir => dir.prettyPrint(indent + 2))
+  }
 }
 
 const parse = (prog: string[]) => {
@@ -91,6 +99,8 @@ const getBestDirToDelete = (entry: Dir, requiredSpace: number) => {
 
 const program = fs.readFileSync('./input.txt', 'utf-8').split('\r\n');
 const root = parse(program);
+
+root.prettyPrint(0);
 
 console.log("Part One", getDirsOfMaxSize(root, 1e5).reduce((sum, b) => sum + b.size(), 0));
 console.log("Part Two", getBestDirToDelete(root, 3e7).size());

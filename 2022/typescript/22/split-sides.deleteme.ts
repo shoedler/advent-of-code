@@ -70,8 +70,6 @@ const rotateCcw = (arr: any[][]) => {
   return arr;
 }
 
-
-
 // const c = cubeSides.map(
 //   cubeSideRow => {
 //     let line = ""
