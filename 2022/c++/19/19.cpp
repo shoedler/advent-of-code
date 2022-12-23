@@ -12,23 +12,22 @@
 
 using namespace std;
 
-struct Price {
+struct price {
   uint16_t ore;
   uint16_t clay;
   uint16_t obsidian;
 };
 
-struct Blueprint {
+struct blueprint {
   uint16_t id;
-  Price ore_miner_cost;
-  Price clay_miner_cost;
-  Price obsidian_miner_cost;
-  Price geode_cracker_cost;
+  price ore_miner_cost;
+  price clay_miner_cost;
+  price obsidian_miner_cost;
+  price geode_cracker_cost;
 };
 
-vector<Blueprint> read_blueprints(const string& fileName) {
-  vector<Blueprint> blueprints;
-
+vector<blueprint> read_blueprints(const string& fileName) {
+  vector<blueprint> blueprints;
   ifstream input(fileName);
   string line;
 
@@ -36,8 +35,9 @@ vector<Blueprint> read_blueprints(const string& fileName) {
     smatch matches;
     regex pattern("Blueprint (\\d+): Each ore robot costs (\\d+) ore. Each clay robot costs (\\d+) ore. Each obsidian robot costs (\\d+) ore and (\\d+) clay. Each geode robot costs (\\d+) ore and (\\d+) obsidian.");
     regex_match(line, matches, pattern);
+    
     if (matches.size() > 0) {
-      Blueprint blueprint;
+      blueprint blueprint;
       blueprint.id = stoi(matches[1]);
       blueprint.ore_miner_cost.ore = stoi(matches[2]);
       blueprint.clay_miner_cost.ore = stoi(matches[3]);
@@ -56,7 +56,7 @@ vector<Blueprint> read_blueprints(const string& fileName) {
 map<tuple<uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t>, int> cache;
 
 int run_blueprint(
-  const Blueprint& blueprint, 
+  const blueprint& blueprint, 
   uint16_t minutes, 
   uint16_t ore, 
   uint16_t clay,
@@ -126,7 +126,7 @@ int run_blueprint(
   const auto can_buy_obsidian_miner = (ore >= blueprint.obsidian_miner_cost.ore && clay >= blueprint.obsidian_miner_cost.clay);
   const auto can_buy_geode_miner = (ore >= blueprint.geode_cracker_cost.ore && obsidian >= blueprint.geode_cracker_cost.obsidian);
 
-  // Base case: Buy nothing -- only i we've currently not got enough reosources to buy any miner.
+  // Base case: Buy nothing -- only if we've currently not got enough reosources to buy any miner.
   auto q = 0;
   if (!(can_buy_clay_miner && can_buy_ore_miner && can_buy_obsidian_miner && can_buy_geode_miner)) {
     q = run_blueprint(blueprint,
@@ -142,7 +142,6 @@ int run_blueprint(
     most_geodes = q > most_geodes ? q : most_geodes;
   }
   
-
   if (can_buy_geode_miner) {
     q = run_blueprint(blueprint,
       minutes - 1,
@@ -202,12 +201,12 @@ int run_blueprint(
   return most_geodes;
 }
 
-void part_one(vector<Blueprint> blueprints) {
+void part_one(vector<blueprint> blueprints) {
   auto t1 = chrono::high_resolution_clock::now();
 
   vector<int> blueprint_qualitites;
 
-  for (const Blueprint& blueprint : blueprints) {
+  for (const blueprint& blueprint : blueprints) {
     const auto geodes = run_blueprint(blueprint, 24, 0, 0, 0, 0, 1, 0, 0, 0);
     blueprint_qualitites.push_back(geodes * blueprint.id);
     cout << "\33[2K\r";
@@ -216,15 +215,13 @@ void part_one(vector<Blueprint> blueprints) {
   }
 
   auto quality_sum = accumulate(blueprint_qualitites.begin(), blueprint_qualitites.end(), 0);
-
   auto t2 = chrono::high_resolution_clock::now();
-
   auto duration = chrono::duration_cast<chrono::milliseconds>(t2 - t1).count();
 
   cout << "Part One: " << quality_sum << " took " << duration << "ms" << endl;
 }
 
-void part_two(vector<Blueprint> blueprints) {
+void part_two(vector<blueprint> blueprints) {
   auto t1 = chrono::high_resolution_clock::now();
 
   vector<int> blueprint_geodes;
@@ -239,9 +236,7 @@ void part_two(vector<Blueprint> blueprints) {
   }
 
   auto top_three_product = accumulate(blueprint_geodes.begin(), blueprint_geodes.end(), 1, multiplies<uint16_t>());
-
   auto t2 = chrono::high_resolution_clock::now();
-
   auto duration = chrono::duration_cast<chrono::milliseconds>(t2 - t1).count();
 
   cout << "Part Teo: " << top_three_product << " took " << duration << "ms" << endl;
@@ -249,7 +244,7 @@ void part_two(vector<Blueprint> blueprints) {
 }
 
 int main() {
-  vector<Blueprint> blueprints = read_blueprints("input.txt");
+  vector<blueprint> blueprints = read_blueprints("input.txt");
 
   part_one(blueprints); // Part One: 960 took 2195ms
   part_two(blueprints); // Part Two: 2040 took 9133ms

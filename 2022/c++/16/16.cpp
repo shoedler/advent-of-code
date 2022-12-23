@@ -24,7 +24,7 @@ void read_valves(const string& fileName) {
   struct valvedef {
     string id;
     int8_t flow_rate;
-	vector<string> tunnels;
+	  vector<string> tunnels;
     uint64_t id_bitmask;
   };
 
@@ -36,32 +36,34 @@ void read_valves(const string& fileName) {
     regex_match(line, matches, pattern);
 
     if (matches.size() > 0) {
-	  auto valve_id = matches[1].str();
-	  auto flow_rate = (int8_t)stoi(matches[2].str());
-	  auto tunnel_ids = matches[3].str();
+      auto valve_id = matches[1].str();
+      auto flow_rate = (int8_t)stoi(matches[2].str());
+      auto tunnel_ids = matches[3].str();
 
-	  istringstream tunnel_idss(tunnel_ids);
+      istringstream tunnel_idss(tunnel_ids);
       vector<string> tunnels;
-			
-	  string tunnel_id;
-	  while (getline(tunnel_idss, tunnel_id, ',')) {
+        
+      string tunnel_id;
+      while (getline(tunnel_idss, tunnel_id, ',')) {
         // trim the tunnel_id
         tunnel_id.erase(remove_if(tunnel_id.begin(), tunnel_id.end(), ::isspace), tunnel_id.end());
-	    tunnels.push_back(tunnel_id);
-	  }
+        tunnels.push_back(tunnel_id);
+      }
 
       valve_ids[valve_id] = valve_ctr;
-	  valve_defs.push_back({ valve_id, flow_rate, tunnels, valve_ctr });
+      valve_defs.push_back({ valve_id, flow_rate, tunnels, valve_ctr });
       valve_ctr <<= 1;
+      }
     }
-  }
-  
-  for (const auto& v : valve_defs) {
-	flow_rates[v.id_bitmask] = v.flow_rate;
+    
+    for (const auto& v : valve_defs) {
+    flow_rates[v.id_bitmask] = v.flow_rate;
+
     auto valve_tunnes = 0ull;
-	for (const auto& t : v.tunnels) {
+    for (const auto& t : v.tunnels) {
       valve_tunnes |= valve_ids[t];
-	}
+	  }
+
     tunnels[v.id_bitmask] = valve_tunnes;
   }
 
@@ -71,6 +73,7 @@ void read_valves(const string& fileName) {
     for (const auto& t : v.tunnels) {
       cout << t << " ";
     }
+    
     cout << endl;
     cout << "Tunnels from bitmask:         ";
     auto valve_tunnels = tunnels[v.id_bitmask];
