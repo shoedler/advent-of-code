@@ -84,57 +84,57 @@ const printCube = (cube: Cube) =>
 
 
 const cube: { [key: string]: { name: keyof typeof cube, data: CubeSide } } = {
-  cubeTop: { name: 'cubeTop', data: cubeRollup[0][1] },
-  cubeRight: { name: 'cubeRight', data: cubeRollup[0][2] },
-  cubeFront: { name: 'cubeFront', data: cubeRollup[1][1] },
-  cubeLeft: { name: 'cubeLeft', data: cubeRollup[2][0] },
-  cubeUnder: { name: 'cubeUnder', data: cubeRollup[2][1] },
-  cubeBack: { name: 'cubeBack', data: cubeRollup[3][0] },
+  top: { name: 'top', data: cubeRollup[0][1] },
+  right: { name: 'right', data: cubeRollup[0][2] },
+  front: { name: 'front', data: cubeRollup[1][1] },
+  left: { name: 'left', data: cubeRollup[2][0] },
+  under: { name: 'under', data: cubeRollup[2][1] },
+  back: { name: 'back', data: cubeRollup[3][0] },
 }
 
 
-const cubeTransitions: { [key: keyof typeof cube ]: {
+const cubeTransitions: { [key: keyof typeof cube]: {
   [K in LeaveDirection]: { 
     cube: typeof cube[keyof typeof cube], 
     rot: 'cw' | 'ccw' | 'flip' | 'flipHoriz' | 'flipVert',
     dir: 'R' | 'U' | 'L' | 'D';
   }
 }} = {
-  'cubeTop': {
-    'leaveTop': { cube: cube.cubeBack, rot: 'ccw', dir: 'R' }, // U -> R (cw)
-    'leaveLeft': { cube: cube.cubeLeft, rot: 'ccw', dir: 'U' }, // L -> U (cw)
-    'leaveRight': { cube: cube.cubeRight, rot: 'flipHoriz', dir: 'R' }, // R -> R (flipHoriz)
-    'leaveBottom': { cube: cube.cubeFront, rot: 'flipVert', dir: 'D' }, // D -> D (flipVert)
+  'top': {
+    'leaveTop': { cube: cube.back, rot: 'ccw', dir: 'R' }, // U -> R (cw)
+    'leaveLeft': { cube: cube.left, rot: 'ccw', dir: 'U' }, // L -> U (cw)
+    'leaveRight': { cube: cube.right, rot: 'flipHoriz', dir: 'R' }, // R -> R (flipHoriz)
+    'leaveBottom': { cube: cube.front, rot: 'flipVert', dir: 'D' }, // D -> D (flipVert)
   },
-  'cubeRight': {
-    'leaveTop': { cube: cube.cubeBack, rot: 'flipVert', dir: 'U' }, // U -> U (flipVert)
-    'leaveLeft': { cube: cube.cubeTop, rot: 'flipHoriz', dir: 'L' }, // L -> L (none)
-    'leaveRight': { cube: cube.cubeUnder, rot: 'flip', dir: 'L' }, // R -> L (flip)
-    'leaveBottom': { cube: cube.cubeFront, rot: 'ccw', dir: 'L' }, // D -> L (cw)
+  'right': {
+    'leaveTop': { cube: cube.back, rot: 'flipVert', dir: 'U' }, // U -> U (flipVert)
+    'leaveLeft': { cube: cube.top, rot: 'flipHoriz', dir: 'L' }, // L -> L (none)
+    'leaveRight': { cube: cube.under, rot: 'flip', dir: 'L' }, // R -> L (flip)
+    'leaveBottom': { cube: cube.front, rot: 'ccw', dir: 'L' }, // D -> L (cw)
   },
-  'cubeFront': {
-    'leaveTop': { cube: cube.cubeTop, rot: 'flipVert', dir: 'U' }, // U -> U (flipVert)
-    'leaveLeft': { cube: cube.cubeLeft, rot: 'cw', dir: 'D' }, // L -> D (ccw)
-    'leaveRight': { cube: cube.cubeRight, rot: 'cw', dir: 'U' }, // R -> U (ccw)
-    'leaveBottom': { cube: cube.cubeUnder, rot: 'flipVert', dir: 'D' }, // D -> D (flipVert)
+  'front': {
+    'leaveTop': { cube: cube.top, rot: 'flipVert', dir: 'U' }, // U -> U (flipVert)
+    'leaveLeft': { cube: cube.left, rot: 'cw', dir: 'D' }, // L -> D (ccw)
+    'leaveRight': { cube: cube.right, rot: 'cw', dir: 'U' }, // R -> U (ccw)
+    'leaveBottom': { cube: cube.under, rot: 'flipVert', dir: 'D' }, // D -> D (flipVert)
   },
-  'cubeUnder': {
-    'leaveTop': { cube: cube.cubeFront, rot: 'flipVert', dir: 'U' }, // U -> U (flipVert)
-    'leaveLeft': { cube: cube.cubeLeft, rot: 'flipHoriz', dir: 'L' }, // L -> L (flipHoriz)
-    'leaveRight': { cube: cube.cubeRight, rot: 'flip', dir: 'L' }, // R -> L (flip)
-    'leaveBottom': { cube: cube.cubeBack, rot: 'ccw', dir: 'L' }, // D -> L (cw)
+  'under': {
+    'leaveTop': { cube: cube.front, rot: 'flipVert', dir: 'U' }, // U -> U (flipVert)
+    'leaveLeft': { cube: cube.left, rot: 'flipHoriz', dir: 'L' }, // L -> L (flipHoriz)
+    'leaveRight': { cube: cube.right, rot: 'flip', dir: 'L' }, // R -> L (flip)
+    'leaveBottom': { cube: cube.back, rot: 'ccw', dir: 'L' }, // D -> L (cw)
   },
-  'cubeLeft': {
-    'leaveTop': { cube: cube.cubeFront, rot: 'ccw', dir: 'R' }, // U -> R (cw)
-    'leaveLeft': { cube: cube.cubeTop, rot: 'flip', dir: 'R' }, // L -> R (flip)
-    'leaveRight': { cube: cube.cubeUnder, rot: 'flipHoriz', dir: 'R' }, // R -> R (flipHoriz)
-    'leaveBottom': { cube: cube.cubeBack, rot: 'flipVert', dir: 'D' }, // D -> D (flipVert)
+  'left': {
+    'leaveTop': { cube: cube.front, rot: 'ccw', dir: 'R' }, // U -> R (cw)
+    'leaveLeft': { cube: cube.top, rot: 'flip', dir: 'R' }, // L -> R (flip)
+    'leaveRight': { cube: cube.under, rot: 'flipHoriz', dir: 'R' }, // R -> R (flipHoriz)
+    'leaveBottom': { cube: cube.back, rot: 'flipVert', dir: 'D' }, // D -> D (flipVert)
   },
-  'cubeBack': {
-    'leaveTop': { cube: cube.cubeLeft, rot: 'flipVert', dir: 'U' }, // U -> U (flipVert)
-    'leaveLeft': { cube: cube.cubeTop, rot: 'cw', dir: 'D' }, // L -> D (ccw)
-    'leaveRight': { cube: cube.cubeUnder, rot: 'cw', dir: 'U' }, // R -> U (ccw)
-    'leaveBottom': { cube: cube.cubeRight, rot: 'flipVert', dir: 'D' }, // D -> D (flipVert)
+  'back': {
+    'leaveTop': { cube: cube.left, rot: 'flipVert', dir: 'U' }, // U -> U (flipVert)
+    'leaveLeft': { cube: cube.top, rot: 'cw', dir: 'D' }, // L -> D (ccw)
+    'leaveRight': { cube: cube.under, rot: 'cw', dir: 'U' }, // R -> U (ccw)
+    'leaveBottom': { cube: cube.right, rot: 'flipVert', dir: 'D' }, // D -> D (flipVert)
   }
 }
 
@@ -167,7 +167,7 @@ const turn = {
 };
 
 let pos: [number, number] = [0, 0];
-let currentSide = cube['cubeTop'];
+let currentSide = cube['top'];
 
 path.forEach(cmd => {
   if (typeof cmd === 'number') {
@@ -220,7 +220,7 @@ path.forEach(cmd => {
 
 console.log(pos); // (.0 + 1) * 1000 + 4 * (.1 + 1) + currentDirIndex // 115063
 
-// printCubeSide(cube.cubeBack.data);
+// printCubeSide(cube.back.data);
 // const lines = fs.readFileSync('input.txt', 'utf8').split('\r\n\r\n')[0].split('\r\n');
 // console.log(1000 * (pos[0] + 1) + 4 * (pos[1] + 1) + currentDirIndex); // 189140 too low
 

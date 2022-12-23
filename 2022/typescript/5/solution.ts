@@ -1,6 +1,5 @@
 import * as fs from 'fs';
-
-const range = (from: number, to: number) => new Array(to-from).fill(0).map(_ => from++);
+import { range } from '../lib';
 
 const simulate = (execCommand: (stacks: string[][]) => (cmd: [number, number, number]) => void) => { 
   const [stacksDef, programText] = fs.readFileSync('./input.txt', 'utf-8').split('\r\n\r\n')

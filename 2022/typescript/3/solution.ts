@@ -1,7 +1,6 @@
 import * as fs from 'fs';
 
 const input = fs.readFileSync('./input.txt', 'utf-8').split('\r\n');
-
 const prios: { [key: string]: number } = {};
 
 'abcdefghijklmnopqrstuvwxyz'.split('').forEach((x,i) => prios[x] = i + 1)
