@@ -79,50 +79,62 @@ const moveBlizzardsOnce = (blizzards_: typeof Blizzards) => {
   return nextBlizzards;
 }
 
-let pos = [0, 1] as Vec;
-let time = 0;
-const queue: [Vec, number][] = [[pos, time]];
-const visited = new Hashset<{pos: Vec, time: number}>();
-const blizzardsConfigs = new Hashmap<number, typeof Blizzards>();
-const isTarget = (pos: Vec): boolean => pos[0] === maxWallCol && !Walls.has(pos);
+const shortestSafePath = (blizzards_: typeof Blizzards, startPos: Vec, targetPos: Vec):{
+  time: number,
+  blizzardsConfig: typeof Blizzards
+} => {
+  let pos = startPos;
+  let time = 0;
+  const queue: [Vec, number][] = [[pos, time]];
+  const visited = new Hashset<{pos: Vec, time: number}>();
+  const blizzardsConfigs = new Hashmap<number, typeof Blizzards>();
 
-while (queue.length > 0) {
-  [pos, time] = queue.shift()!;
+  while (queue.length > 0) {
+    [pos, time] = queue.shift()!;
 
-  if (visited.has({ pos, time }))
-    continue;
-
-  let blizzards = blizzardsConfigs.get(time);
-  if (!blizzards && time <=0) { // First time
-    blizzards = moveBlizzardsOnce(Blizzards);
-    blizzardsConfigs.put(time, blizzards);
-  }
-  else if (!blizzards) {
-    const prevBlizzards = blizzardsConfigs.get(time - 1)!;
-    blizzards = moveBlizzardsOnce(prevBlizzards);
-    blizzardsConfigs.put(time, blizzards);
-  }
-
-  if (blizzards.has(pos))
-    continue;
-
-  visited.put({pos, time});
-
-  if (isTarget(pos)) {
-    log('Part One:', time + 1);
-    break;
-  }
-  
-  for (const dir of Object.values(Directions)) {
-    const newPos = [pos[0] + dir[0], pos[1] + dir[1]] as Vec;
-    if (Walls.has(newPos))
+    if (visited.has({ pos, time }))
       continue;
-    if (pos[0] < minWallCol) 
+
+    let blizzards = blizzardsConfigs.get(time);
+    if (!blizzards && time <=0) { // First time
+      blizzards = blizzards_;
+      blizzardsConfigs.put(time, blizzards);
+    }
+    else if (!blizzards) {
+      const prevBlizzards = blizzardsConfigs.get(time - 1)!;
+      blizzards = moveBlizzardsOnce(prevBlizzards);
+      blizzardsConfigs.put(time, blizzards);
+    }
+
+    if (blizzards.has(pos))
       continue;
-    queue.push([newPos, time + 1]);
+
+    visited.put({pos, time});
+
+    if (pos[0] === targetPos[0] && pos[1] === targetPos[1]) {
+      return { time, blizzardsConfig: blizzards };
+    }
+    
+    for (const dir of Object.values(Directions)) {
+      const newPos = [pos[0] + dir[0], pos[1] + dir[1]] as Vec;
+      if (Walls.has(newPos))
+        continue;
+      if (pos[0] < minWallCol || pos[0] > maxWallCol) 
+        continue; // If we're at start or target we don't want to go look outside the map
+      queue.push([newPos, time + 1]);
+    }
+    queue.push([pos, time + 1]); // Wait
   }
-  queue.push([pos, time + 1]); // Wait
 }
+
+const p1 = shortestSafePath(Blizzards, [0, 1], [maxWallCol, maxWallRow - 1]);
+log(p1.time)
+const p2i = shortestSafePath(p1.blizzardsConfig, [maxWallCol, maxWallRow - 1], [0, 1]);
+const p2 = shortestSafePath(p2i.blizzardsConfig, [0, 1], [maxWallCol, maxWallRow - 1]);
+// P1 225
+
+log(p2.time + p2i.time + p1.time); // 451 too low
+
 
 // for (let i = 0; i < 10; i++) {
 //   printMap();
