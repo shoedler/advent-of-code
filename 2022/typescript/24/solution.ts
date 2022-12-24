@@ -1,6 +1,6 @@
-import { assert, log } from 'console';
+import { log } from 'console';
 import * as fs from 'fs';
-import { Hashmap, Hashset } from '../lib';
+import { Hashmap, Hashset, runPart } from '../lib';
 
 type Vec = [number, number];
 type Blizzard = '^' | 'v' | '<' | '>';
@@ -27,39 +27,14 @@ fs.readFileSync('./input.txt', 'utf-8').split('\r\n')
         append(Blizzards, [col, row], char as Blizzard);
     }));
 
-// const printMap = () => {
-//   const colMin = Math.min(...Walls.items().map(([c, _]) => c), ...Blizzards.items().map(([[c, _], __]) => c));
-//   const colMax = Math.max(...Walls.items().map(([c, _]) => c), ...Blizzards.items().map(([[c, _], __]) => c)) + 1;
-//   const rowMin = Math.min(...Walls.items().map(([_, r]) => r), ...Blizzards.items().map(([[_, r], __]) => r));
-//   const rowMax = Math.max(...Walls.items().map(([_, r]) => r), ...Blizzards.items().map(([[_, r], __]) => r)) + 1;
-
-//   for (let c = colMin; c < colMax; c++) {
-//     let line = '';
-    
-//     for (let r = rowMin; r < rowMax; r++) {
-//       let char = (Walls.has([c, r])) ? '#' : '.'
-//       const blizzards = Blizzards.get([c, r]);
-
-//       if (blizzards && blizzards.length > 0) {
-//         char = (blizzards.length === 1) ? blizzards[0] : 
-//           (blizzards.length < 10) ? blizzards.length.toString() :
-//           (blizzards.length >= 10) ? '!' : 
-//           char;
-//       }
-//       line += char;
-//     }
-//     log(line);
-//   }
-// }
-
 const minWallCol = Math.min(...Walls.items().map(([c, _]) => c));
 const maxWallCol = Math.max(...Walls.items().map(([c, _]) => c));
 const minWallRow = Math.min(...Walls.items().map(([_, r]) => r));
 const maxWallRow = Math.max(...Walls.items().map(([_, r]) => r));
 
-const moveBlizzardsOnce = (blizzards_: typeof Blizzards) => {
-  const blizzards = blizzards_.items();
-  const nextBlizzards = new Hashmap<Vec, Blizzard[]>();
+const nextBlizzards = (initialBlizzards: typeof Blizzards) => {
+  const blizzards = initialBlizzards.items();
+  const next = new Hashmap<Vec, Blizzard[]>();
 
   for (const [[c, r], blzzs] of blizzards) {
     blzzs.forEach(blizzard => {
@@ -72,22 +47,22 @@ const moveBlizzardsOnce = (blizzards_: typeof Blizzards) => {
         if (newPos[1] <= minWallRow) newPos[1] = maxWallRow - 1;
         if (newPos[1] >= maxWallRow) newPos[1] = minWallRow + 1;
       }
-      append(nextBlizzards, newPos, blizzard);
+      append(next, newPos, blizzard);
     });
   }
 
-  return nextBlizzards;
+  return next;
 }
 
-const shortestSafePath = (blizzards_: typeof Blizzards, startPos: Vec, targetPos: Vec):{
-  time: number,
-  blizzardsConfig: typeof Blizzards
+const shortestSafePath = (initialBlizzards: typeof Blizzards, startPos: Vec, targetPos: Vec): { 
+  time: number, 
+  blizzardsConfig: typeof Blizzards 
 } => {
   let pos = startPos;
   let time = 0;
   const queue: [Vec, number][] = [[pos, time]];
   const visited = new Hashset<{pos: Vec, time: number}>();
-  const blizzardsConfigs = new Hashmap<number, typeof Blizzards>();
+  const blizzardsHistory = new Hashmap<number, typeof Blizzards>();
 
   while (queue.length > 0) {
     [pos, time] = queue.shift()!;
@@ -95,15 +70,17 @@ const shortestSafePath = (blizzards_: typeof Blizzards, startPos: Vec, targetPos
     if (visited.has({ pos, time }))
       continue;
 
-    let blizzards = blizzardsConfigs.get(time);
-    if (!blizzards && time <=0) { // First time
-      blizzards = blizzards_;
-      blizzardsConfigs.put(time, blizzards);
+    // Retrieve blizzards from history or calculate the next iteration 
+    // if we haven't seen this 'time' before
+    let blizzards = blizzardsHistory.get(time);
+    if (!blizzards && time <= 0) {
+      blizzards = initialBlizzards;  // Starting with the provided blizzards at time 0
+      blizzardsHistory.put(time, blizzards);
     }
     else if (!blizzards) {
-      const prevBlizzards = blizzardsConfigs.get(time - 1)!;
-      blizzards = moveBlizzardsOnce(prevBlizzards);
-      blizzardsConfigs.put(time, blizzards);
+      const prevBlizzards = blizzardsHistory.get(time - 1)!;
+      blizzards = nextBlizzards(prevBlizzards);
+      blizzardsHistory.put(time, blizzards);
     }
 
     if (blizzards.has(pos))
@@ -111,9 +88,8 @@ const shortestSafePath = (blizzards_: typeof Blizzards, startPos: Vec, targetPos
 
     visited.put({pos, time});
 
-    if (pos[0] === targetPos[0] && pos[1] === targetPos[1]) {
+    if (pos[0] === targetPos[0] && pos[1] === targetPos[1]) 
       return { time, blizzardsConfig: blizzards };
-    }
     
     for (const dir of Object.values(Directions)) {
       const newPos = [pos[0] + dir[0], pos[1] + dir[1]] as Vec;
@@ -127,20 +103,17 @@ const shortestSafePath = (blizzards_: typeof Blizzards, startPos: Vec, targetPos
   }
 }
 
-const p1 = shortestSafePath(Blizzards, [0, 1], [maxWallCol, maxWallRow - 1]);
-log(p1.time)
-const p2i = shortestSafePath(p1.blizzardsConfig, [maxWallCol, maxWallRow - 1], [0, 1]);
-const p2 = shortestSafePath(p2i.blizzardsConfig, [0, 1], [maxWallCol, maxWallRow - 1]);
-// P1 225
+let startToTarget: any = null;
+let backToStart: any = null;
+let backToTarget: any = null;
 
-log(p2.time + p2i.time + p1.time); // 451 too low
+runPart("One", () => {
+  startToTarget = shortestSafePath(Blizzards, [0, 1], [maxWallCol, maxWallRow - 1]);
+  return startToTarget.time;
+}); // 225 took 2836ms
 
-
-// for (let i = 0; i < 10; i++) {
-//   printMap();
-//   log('--------------');
-//   moveBlizzards();
-// }
-// printMap();
-// log('--------------');
-// Setup: i7-1065H, 16GB RAM node v17.8.0
+runPart("Two", () => {
+  backToStart = shortestSafePath(startToTarget.blizzardsConfig, [maxWallCol, maxWallRow - 1], [0, 1]);
+  backToTarget = shortestSafePath(backToStart.blizzardsConfig, [0, 1], [maxWallCol, maxWallRow - 1]);
+  return startToTarget.time + backToStart.time + backToTarget.time;
+}); // 711 took 7249ms

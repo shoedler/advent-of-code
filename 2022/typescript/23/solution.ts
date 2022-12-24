@@ -14,14 +14,16 @@ fs.readFileSync('./input.txt', 'utf-8').split('\r\n')
 
 const printMap = (map: Hashset<[number, number]>) => {
   const content = map.items();
-  const r1 = Math.min(...content.map(([r,_]) => r));
-  const r2 = Math.max(...content.map(([r,_]) => r)) + 1;
-  const c1 = Math.min(...content.map(([_,c]) => c));
-  const c2 = Math.max(...content.map(([_,c]) => c)) + 1;
-  for (let r = r1; r < r2; r++) {
+  
+  const c1 = Math.min(...content.map(([c,_]) => c));
+  const c2 = Math.max(...content.map(([c,_]) => c)) + 1;
+  const r1 = Math.min(...content.map(([_,r]) => r));
+  const r2 = Math.max(...content.map(([_,r]) => r)) + 1;
+
+  for (let c = c1; c < c2; c++) {
     let line = '';
-    for (let c = c1; c < c2; c++) 
-      line += (Elves.has([r, c])) ? '#' : '.'
+    for (let r = r1; r < r2; r++) 
+      line += (Elves.has([c, r])) ? '#' : '.'
     log(line);
   }
 }
@@ -68,7 +70,7 @@ const Cardinals = [ 'N', 'S', 'W', 'E' ];
 const getMovePos = (p: [number, number], dir: [number, number]): [number, number] => [p[0] + dir[0], p[1] + dir[1]];
 
 let t = Date.now();
-for (let i = 0; i < Number.MAX_SAFE_INTEGER; i++) {
+for (let i = 0; i < Infinity; i++) {
   const moveProposals = new Hashmap<[number, number], [number, number]>();
   const elves = Elves.items();
 
@@ -112,7 +114,7 @@ for (let i = 0; i < Number.MAX_SAFE_INTEGER; i++) {
   // Move
   const proposals = moveProposals.items()
   proposals.forEach(([prevPos, targetPos]) => {
-    if (proposals.filter(([prev, target]) => target[0] === targetPos[0] && target[1] === targetPos[1]).length === 1) {
+    if (proposals.filter(([_, target]) => target[0] === targetPos[0] && target[1] === targetPos[1]).length === 1) {
       Elves.remove(prevPos);
       Elves.put(targetPos);
     }
