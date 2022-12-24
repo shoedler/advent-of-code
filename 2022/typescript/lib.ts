@@ -1,3 +1,10 @@
+export const runPart = (part: 'One' | 'Two', solutionFn: () => number) => {
+  const start = Date.now();
+  const result = solutionFn();
+  const end = Date.now();
+  console.log(`Part ${part}`, result, `took ${end - start}ms`);
+}
+
 export class Hashmap<K, V> {
   private hashes: { [ key: string ]: V } = {};
   public put = (key: K, value: V) => this.hashes[JSON.stringify(key)] = value;

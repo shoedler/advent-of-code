@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import { runPart } from '../lib';
 
 let inputType: any = "txt";
 const [mapDef, pathDef] = fs.readFileSync(`./input.${inputType}`, 'utf-8').split('\r\n\r\n')
@@ -6,152 +7,7 @@ const [mapDef, pathDef] = fs.readFileSync(`./input.${inputType}`, 'utf-8').split
 const path = pathDef.split(/([A-Z])/g)
   .map(char => /\d+/.test(char) ? Number(char) : char) as (number | 'L' | 'R')[];
 
-// Balance line lengths
-let mapLines = mapDef.split('\r\n')
-const longestLine = Math.max(...mapLines.map(line => line.length));
-mapLines = mapLines.map(line => line.padEnd(longestLine, " "));
-
-type CubeSide = string[][];
-type CubeSideRow = CubeSide[];
-type Cube = CubeSideRow[];
-type LeaveDirection = 'leaveTop' | 'leaveLeft' | 'leaveRight' | 'leaveBottom';
-
-const cubeRollup: Cube = [];
-
-const CUBE_DIM = inputType === 'ext' ? 4 : 50;
-const CUBE_DEF_ROW_LEN = mapLines.length / CUBE_DIM;
-const CUBE_DEF_COL_LEN = mapLines[0].length / CUBE_DIM;
-
-// Build cube sides
-for (let i = 0; i < CUBE_DEF_ROW_LEN; i++) {
-  const cubeSideRow: CubeSideRow = [];
-  for (let j = 0; j < CUBE_DEF_COL_LEN; j++) {
-    const cubeSide: CubeSide = [];
-    for (let ci = i * CUBE_DIM; ci < i * CUBE_DIM + CUBE_DIM; ci++) {
-      const cubeSideRowRow: string[] = [];
-      const line = mapLines[ci];
-      for (let cj = j * CUBE_DIM; cj < j * CUBE_DIM + CUBE_DIM; cj++) 
-        cubeSideRowRow.push(line[cj])
-      
-      cubeSide.push(cubeSideRowRow);
-    }
-    cubeSideRow.push(cubeSide)
-  }
-  cubeRollup.push(cubeSideRow);
-}
-
-// const rotCw = <T>(a: T[][]): T[][] => {
-//   let arr = JSON.parse(JSON.stringify(a))
-
-//   for (let i = 0; i < arr.length; i++) 
-//     for (let j = i + 1; j < arr[i].length; j++) 
-//       [arr[i][j], arr[j][i]] = [arr[j][i], arr[i][j]];
-
-//   arr.map((row: T[]) => row.reverse()) // in-place, even tough it's 'map'
-//   return arr;
-// }
-
-// const rotCcw = <T>(a: T[][]): T[][] => {
-//   let arr = JSON.parse(JSON.stringify(a))
-
-//   for (let i = 0; i < arr.length; i++) 
-//     for (let j = i + 1; j < arr[i].length; j++) 
-//       [arr[i][j], arr[j][i]] = [arr[j][i], arr[i][j]];
-
-//   return arr;
-// }
-
-// const flip = <T>(a: T[][]) => {
-//   let arr = JSON.parse(JSON.stringify(a))
-//   return arr.map((row: T[]) => row.reverse());
-// }
-
-const printCubeSide = (cubeSide: CubeSide) => 
-  console.log(cubeSide.map(row => row.join('')).join('\n'));
-
-const printCube = (cube: Cube) =>
-  console.log(cube.map(
-    cubeSideRow => {
-      let line = ""
-      for (let i = 0; i < CUBE_DIM; i++) {
-        for (let j = 0; j < cubeSideRow.length; j++) 
-          line += cubeSideRow[j][i].join('')
-        
-        line += '\n'
-      }
-      return line;
-    }).join(''));
-
-
-const cube: { [key: string]: { name: keyof typeof cube, data: CubeSide } } = {
-  top: { name: 'top', data: cubeRollup[0][1] },
-  right: { name: 'right', data: cubeRollup[0][2] },
-  front: { name: 'front', data: cubeRollup[1][1] },
-  left: { name: 'left', data: cubeRollup[2][0] },
-  under: { name: 'under', data: cubeRollup[2][1] },
-  back: { name: 'back', data: cubeRollup[3][0] },
-}
-
-
-const cubeTransitions: { [key: keyof typeof cube]: {
-  [K in LeaveDirection]: { 
-    cube: typeof cube[keyof typeof cube], 
-    rot: 'cw' | 'ccw' | 'flip' | 'flipHoriz' | 'flipVert',
-    dir: 'R' | 'U' | 'L' | 'D';
-  }
-}} = {
-  'top': {
-    'leaveTop': { cube: cube.back, rot: 'ccw', dir: 'R' }, // U -> R (cw)
-    'leaveLeft': { cube: cube.left, rot: 'ccw', dir: 'U' }, // L -> U (cw)
-    'leaveRight': { cube: cube.right, rot: 'flipHoriz', dir: 'R' }, // R -> R (flipHoriz)
-    'leaveBottom': { cube: cube.front, rot: 'flipVert', dir: 'D' }, // D -> D (flipVert)
-  },
-  'right': {
-    'leaveTop': { cube: cube.back, rot: 'flipVert', dir: 'U' }, // U -> U (flipVert)
-    'leaveLeft': { cube: cube.top, rot: 'flipHoriz', dir: 'L' }, // L -> L (none)
-    'leaveRight': { cube: cube.under, rot: 'flip', dir: 'L' }, // R -> L (flip)
-    'leaveBottom': { cube: cube.front, rot: 'ccw', dir: 'L' }, // D -> L (cw)
-  },
-  'front': {
-    'leaveTop': { cube: cube.top, rot: 'flipVert', dir: 'U' }, // U -> U (flipVert)
-    'leaveLeft': { cube: cube.left, rot: 'cw', dir: 'D' }, // L -> D (ccw)
-    'leaveRight': { cube: cube.right, rot: 'cw', dir: 'U' }, // R -> U (ccw)
-    'leaveBottom': { cube: cube.under, rot: 'flipVert', dir: 'D' }, // D -> D (flipVert)
-  },
-  'under': {
-    'leaveTop': { cube: cube.front, rot: 'flipVert', dir: 'U' }, // U -> U (flipVert)
-    'leaveLeft': { cube: cube.left, rot: 'flipHoriz', dir: 'L' }, // L -> L (flipHoriz)
-    'leaveRight': { cube: cube.right, rot: 'flip', dir: 'L' }, // R -> L (flip)
-    'leaveBottom': { cube: cube.back, rot: 'ccw', dir: 'L' }, // D -> L (cw)
-  },
-  'left': {
-    'leaveTop': { cube: cube.front, rot: 'ccw', dir: 'R' }, // U -> R (cw)
-    'leaveLeft': { cube: cube.top, rot: 'flip', dir: 'R' }, // L -> R (flip)
-    'leaveRight': { cube: cube.under, rot: 'flipHoriz', dir: 'R' }, // R -> R (flipHoriz)
-    'leaveBottom': { cube: cube.back, rot: 'flipVert', dir: 'D' }, // D -> D (flipVert)
-  },
-  'back': {
-    'leaveTop': { cube: cube.left, rot: 'flipVert', dir: 'U' }, // U -> U (flipVert)
-    'leaveLeft': { cube: cube.top, rot: 'cw', dir: 'D' }, // L -> D (ccw)
-    'leaveRight': { cube: cube.under, rot: 'cw', dir: 'U' }, // R -> U (ccw)
-    'leaveBottom': { cube: cube.right, rot: 'flipVert', dir: 'D' }, // D -> D (flipVert)
-  }
-}
-
-// Noted: rot 'cw' turns the dir 'ccw' and vice versa.
-// 'flip' turns the dir 'flip' e.g. 'R' -> 'L', 'U' -> 'D', 'L' -> 'R', 'D' -> 'U'
-// 'flipHoriz' does not change the dir
-// 'flipVert' does not change the dir
-
-const rotate = (pos: [number, number], rot: 'cw' | 'ccw' | 'flip' | 'flipHoriz' | 'flipVert'): [number, number] => {
-  switch (rot) {
-    case 'cw': return [CUBE_DIM - 1 - pos[1], pos[0]];
-    case 'ccw': return [pos[1], CUBE_DIM - 1 - pos[0]];
-    case 'flip': return [CUBE_DIM - 1 - pos[0], CUBE_DIM - 1 - pos[1]]
-    case 'flipHoriz': return [pos[0], CUBE_DIM - 1 - pos[1]]
-    case 'flipVert': return [CUBE_DIM - 1 - pos[0], pos[1]]
-  } 
-}
+const grid = mapDef.split('\r\n')
 
 const directions = {
   'R': [0, 1],
@@ -160,77 +16,152 @@ const directions = {
   'U': [-1, 0],
 }
 
-let currentDirIndex = 0;
-const turn = {
-  'R': () => currentDirIndex = (currentDirIndex + 1) % Object.entries(directions).length,
-  'L': () => currentDirIndex = (currentDirIndex - 1) < 0 ? Object.entries(directions).length - 1 : --currentDirIndex
-};
+const CUBE_DIM = 50;
 
-let pos: [number, number] = [0, 0];
-let currentSide = cube['top'];
+const cubeSides = {
+  'top': { colStart: 0, rowStart: CUBE_DIM },
+  'right': { colStart: 0, rowStart: CUBE_DIM * 2 },
+  'front': { colStart: CUBE_DIM, rowStart: CUBE_DIM },
+  'left': { colStart: CUBE_DIM * 2, rowStart: 0 },
+  'under': { colStart: CUBE_DIM * 2, rowStart: CUBE_DIM },
+  'back': { colStart: CUBE_DIM * 3, rowStart: 0 },
+}
 
-path.forEach(cmd => {
-  if (typeof cmd === 'number') {
-    let dir = Object.values(directions)[currentDirIndex];
+// From -> Exit Direction -> To
+const translationTable = {
+  'top': {
+    'leaveTop': { next: 'back', nextDir: 'R', nextPos: (absPos: [number, number]) => { return [(absPos[1] % CUBE_DIM) + cubeSides.back.colStart, cubeSides.back.rowStart ] } },
+    'leaveLeft': { next: 'left', nextDir: 'R', nextPos: (absPos: [number, number]) => { return [cubeSides.left.colStart + (CUBE_DIM - (absPos[0] % CUBE_DIM) - 1), cubeSides.left.rowStart]} },
+    'leaveRight': { next: 'right', nextDir: 'R', nextPos: (absPos: [number, number]) => absPos },
+    'leaveBottom': { next: 'front', nextDir: 'D', nextPos: (absPos: [number, number]) => absPos },
+  },
+  'right': {
+    'leaveTop': { next: 'back', nextDir: 'U', nextPos: (absPos: [number, number]) => { return [cubeSides.back.colStart + CUBE_DIM - 1, cubeSides.back.rowStart + (absPos[1] % CUBE_DIM) ] } },
+    'leaveLeft': { next: 'top', nextDir: 'L', nextPos: (absPos: [number, number]) => absPos },
+    'leaveRight': { next: 'under', nextDir: 'L', nextPos: (absPos: [number, number]) => { return [cubeSides.under.colStart + (CUBE_DIM - (absPos[0] % CUBE_DIM) - 1), cubeSides.under.rowStart + CUBE_DIM - 1] } },
+    'leaveBottom': { next: 'front', nextDir: 'L', nextPos: (absPos: [number, number]) => { return [cubeSides.front.colStart + (absPos[1] % CUBE_DIM), cubeSides.front.rowStart + CUBE_DIM - 1] } },
+  },
+  'front': {
+    'leaveTop': { next: 'top', nextDir: 'U', nextPos: (absPos: [number, number]) => absPos },
+    'leaveLeft': { next: 'left', nextDir: 'D', nextPos: (absPos: [number, number]) => { return [cubeSides.left.colStart, cubeSides.left.rowStart + (absPos[0] % CUBE_DIM)] } },
+    'leaveRight': { next: 'right', nextDir: 'U', nextPos: (absPos: [number, number]) => { return [cubeSides.right.colStart + CUBE_DIM - 1, cubeSides.right.rowStart + (absPos[0] % CUBE_DIM)] } },
+    'leaveBottom': { next: 'under', nextDir: 'D', nextPos: (absPos: [number, number]) => absPos },
+  },
+  'left': {
+    'leaveTop': { next: 'front', nextDir: 'R', nextPos: (absPos: [number, number]) => { return [cubeSides.front.colStart + (absPos[1] % CUBE_DIM), cubeSides.front.rowStart] } },
+    'leaveLeft': { next: 'top', nextDir: 'R', nextPos: (absPos: [number, number]) => { return [cubeSides.top.colStart + (CUBE_DIM - (absPos[0] % CUBE_DIM) - 1), cubeSides.top.rowStart] } },
+    'leaveRight': { next: 'under', nextDir: 'R', nextPos: (absPos: [number, number]) => absPos },
+    'leaveBottom': { next: 'back', nextDir: 'D', nextPos: (absPos: [number, number]) => absPos },
+  },
+  'under': {
+    'leaveTop': { next: 'front', nextDir: 'U', nextPos: (absPos: [number, number]) => absPos },
+    'leaveLeft': { next: 'left', nextDir: 'L', nextPos: (absPos: [number, number]) => absPos },
+    'leaveRight': { next: 'right', nextDir: 'L', nextPos: (absPos: [number, number]) => { return [cubeSides.right.colStart + (CUBE_DIM - (absPos[0] % CUBE_DIM) - 1), cubeSides.right.rowStart + CUBE_DIM - 1] } },
+    'leaveBottom': { next: 'back', nextDir: 'L', nextPos: (absPos: [number, number]) => { return [cubeSides.back.colStart + (absPos[1] % CUBE_DIM), cubeSides.back.rowStart + CUBE_DIM - 1] } },
+  },
+  'back': {
+    'leaveTop': { next: 'left', nextDir: 'U', nextPos: (absPos: [number, number]) => absPos },
+    'leaveLeft': { next: 'top', nextDir: 'D', nextPos: (absPos: [number, number]) => { return [cubeSides.top.colStart, cubeSides.top.rowStart + (absPos[0] % CUBE_DIM)] } },
+    'leaveRight': { next: 'under', nextDir: 'U', nextPos: (absPos: [number, number]) => { return [cubeSides.under.colStart + CUBE_DIM - 1, cubeSides.under.rowStart + (absPos[0] % CUBE_DIM)] } },
+    'leaveBottom': { next: 'right', nextDir: 'D', nextPos: (absPos: [number, number]) => { return [cubeSides.right.colStart, cubeSides.right.rowStart + (absPos[1] % CUBE_DIM)] } },
+  }
+}
 
-    let i = 0;
-    while (i < cmd) {
-      if (currentSide.data[pos[0]][pos[1]] === '#') {
-        break;
+
+const travel = (useCubeWrapping = true) => {
+  let facing = 0;
+  const turn = {
+    'R': () => facing = (facing + 1) % Object.entries(directions).length,
+    'L': () => facing = (facing - 1) < 0 ? Object.entries(directions).length - 1 : --facing
+  };
+  
+  
+  let pos: [number, number] = [0, 0];
+  pos[1] = grid[0].indexOf('.');
+  let currentSide: keyof typeof cubeSides = 'top';
+  
+  const getPos = (ofs: number[] = [0, 0]) => {
+    const row = grid[pos[0] + ofs[0]]
+    if (row === undefined) return undefined
+    return row[pos[1] + ofs[1]];
+  }
+
+  path.forEach(cmd => {
+    if (typeof cmd === 'number') {
+      let dir = Object.values(directions)[facing];
+  
+      let i = 0;
+      while (i < cmd) {
+        dir = Object.values(directions)[facing];
+  
+        if (getPos(dir) === '#') 
+          break;
+  
+        const prevPos = [...pos];
+        const prevFacing = facing;
+  
+        pos[0] += dir[0];
+        pos[1] += dir[1];
+        
+        if (useCubeWrapping) {
+          const leave = 
+            pos[1] > cubeSides[currentSide].rowStart + CUBE_DIM - 1 ?  'leaveRight'  : 
+            pos[1] < cubeSides[currentSide].rowStart ?                 'leaveLeft'   : 
+            pos[0] > cubeSides[currentSide].colStart + CUBE_DIM - 1 ?  'leaveBottom' : 
+            pos[0] < cubeSides[currentSide].colStart ?                 'leaveTop'    :
+            '';
+    
+          if (leave !== '') {
+            const transpose = translationTable[currentSide][leave];
+            pos = transpose.nextPos(pos) as [number, number];
+            facing = Object.keys(directions).indexOf(transpose.nextDir);
+              
+            // Don't transpose if we're about to hit a wall
+            if (getPos() === '#'){
+              pos = prevPos as [number, number];
+              facing = prevFacing;
+              break;
+            }
+    
+            currentSide = transpose.next as keyof typeof cubeSides;  
+          }
+        }
+        else {
+          // Edge case - move to the opposite side of the axis where we've moved out of bounds
+          if ((getPos() === ' ') || (getPos() === undefined)) {
+            const revDir0 = dir[0] * -1;
+            const revDir1 = dir[1] * -1;
+
+            pos[0] += revDir0
+            pos[1] += revDir1
+
+            while ((getPos() !== ' ') && (getPos() !== undefined)) {
+              pos[0] += revDir0
+              pos[1] += revDir1
+            }
+
+            pos[0] += dir[0];
+            pos[1] += dir[1];
+
+            if (getPos() === '#') {
+              pos = prevPos as [number, number];
+              break;
+            }
+          }
+        }
+  
+        i++;
       }
-
-      pos[0] += dir[0];
-      pos[1] += dir[1];
-
-      // Get leave direction
-      if (dir[0] < 0) { 
-        const nextTranspose = cubeTransitions[currentSide.name]['leaveTop'];
-        currentSide = nextTranspose.cube;
-        pos = rotate(pos, nextTranspose.rot);
-        dir = directions[nextTranspose.dir];
-      }
-      else if (dir[0] >= CUBE_DIM) {
-        const nextTranspose = cubeTransitions[currentSide.name]['leaveBottom'];
-        currentSide = nextTranspose.cube;
-        pos = rotate(pos, nextTranspose.rot);
-        dir = directions[nextTranspose.dir];
-      }
-      else if (dir[1] < 0) {
-        const nextTranspose = cubeTransitions[currentSide.name]['leaveLeft'];
-        currentSide = nextTranspose.cube;
-        pos = rotate(pos, nextTranspose.rot);
-        dir = directions[nextTranspose.dir];
-      }
-      else if (dir[1] >= CUBE_DIM) {
-        const nextTranspose = cubeTransitions[currentSide.name]['leaveRight'];
-        currentSide = nextTranspose.cube;
-        pos = rotate(pos, nextTranspose.rot);
-        dir = directions[nextTranspose.dir];
-      }
-
-      i++;
     }
+    else {
+      console.assert(/[LR]/.test(cmd as string));
+      turn[cmd]();
+    }
+  })
 
-  }
-  else {
-    console.assert(/[A-Z]/.test(cmd as string));
-    turn[cmd]();
-  }
-})
+  return (pos[0] + 1) * 1000 + 4 * (pos[1] + 1) + facing;
+}
 
-console.log(pos); // (.0 + 1) * 1000 + 4 * (.1 + 1) + currentDirIndex // 115063
-
-// printCubeSide(cube.back.data);
-// const lines = fs.readFileSync('input.txt', 'utf8').split('\r\n\r\n')[0].split('\r\n');
-// console.log(1000 * (pos[0] + 1) + 4 * (pos[1] + 1) + currentDirIndex); // 189140 too low
-
-// // Setup: i7-1065H, 16GB RAM node v17.8.0
-// let t = Date.now();
-// let rootValue = 0
-// let duration = Date.now() - t;
-// console.log("Part One", rootValue, `took ${duration}ms`); // 43699799094202 took 0ms
-
-// t = Date.now();
-// const humanValue = 0
-// duration = Date.now() - t;
-// console.log("Part Two", humanValue, `took ${duration}ms`); // 3375719472770 took 6ms
+// Setup: i7-1065H, 16GB RAM node v17.8.0
+runPart('One', () => travel(false)); // 189140 took 32ms
+runPart('Two', () => travel(true)); // 115063 took 20ms
