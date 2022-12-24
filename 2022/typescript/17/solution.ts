@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import { runPart } from '../lib';
 
 const commands: ('>'|'<')[] = [];
 
@@ -191,14 +192,6 @@ const simulate = (targetShapeCount: number) => {
 }
 
 // Setup: i7-1065H, 16GB RAM node v17.8.0
-let t = Date.now();
-const chamber2022Iters = simulate(2022);
-const chamber2022ItersTimeMs = Date.now() - t;
-
-console.log("Part One", chamber2022Iters, `took ${chamber2022ItersTimeMs}ms`); // 3098 took 11ms
-
-t = Date.now();
-const chamberTrillionIters = simulate(1_000_000_000_000); // 1e12 is a "Billion" in German.
-const chamberTrillionItersTimeMs = Date.now() - t;
-
-console.log("Part Two", chamberTrillionIters, `took ${chamberTrillionItersTimeMs}ms`); // 1525364431487 took 8ms
+runPart("One", () => simulate(2022)); // 3098 took 11ms
+runPart("Two", () => simulate(1_000_000_000_000)); // 1525364431487 took 8ms
+// 1e12 is a "Billion" in German

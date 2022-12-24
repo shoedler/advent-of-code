@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import { runPart } from '../lib';
 import { absDx, absDy, equals, Vec } from './Vec';
 
 const caveScan = fs.readFileSync('./input.txt', 'utf-8').split('\r\n')
@@ -80,10 +81,16 @@ const dropOnce = (type: 'P1' | 'P2') => {
   }
 }
 
-while (dropOnce('P1')) {}
-console.log("Part One", grainsOfSand.size); // 692
+runPart("One", () => {
+  while (dropOnce('P1')) {}
+  const result = grainsOfSand.size;
+  grainsOfSand.clear();
+  return result;
+}); // 692 took 24ms
 
-grainsOfSand.clear();
-
-while (dropOnce('P2')) {}
-console.log("Part Two", grainsOfSand.size); // 31706
+runPart("Two", () => {
+  while (dropOnce('P2')) {}
+  const result = grainsOfSand.size;
+  grainsOfSand.clear();
+  return result;
+}); // 31706 took 764ms

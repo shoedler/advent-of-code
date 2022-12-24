@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import { runPart } from '../lib';
 type Vec = { x: number, y: number };
 type VecD = Vec & { dist: number };
 
@@ -89,14 +90,6 @@ const freqOfDistressBeacon = (): bigint => {
   }
 };
 
-let t = Date.now();
-const invalidPositions = invalidPositionsAtRow(2e6);
-const invalidPoistionsTimeMs = Date.now() - t;
-
-t = Date.now();
-const freq = freqOfDistressBeacon();
-const freqTimeMs =  Date.now() - t;
-
 // Config i7-11800H @ 2.3Ghz, 32GB RAM node v16.13.2
-console.log("Part One", invalidPositions, `took ${invalidPoistionsTimeMs}ms`); // 5125700 took 494ms
-console.log("Part Two", freq, `took ${freqTimeMs}ms`); // 11379394658764n took 248ms
+runPart("One", () => invalidPositionsAtRow(2e6)); // 5125700 took 494ms
+runPart("Two", () => freqOfDistressBeacon()); // 11379394658764n took 248ms

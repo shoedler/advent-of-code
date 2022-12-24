@@ -1,11 +1,12 @@
 import * as fs from 'fs';
+import { runPart } from '../lib';
 const { log } = console;
 
 /* 
   This solution does probably work (for Part 1) but it's way too slow. 🐌 It'll probably take a few
   hours to solve part 1.
   Implemented the same approach with c++ (/2022/c++/19) which solves both parts in about 10s.
-  Main issue is probably caching - it's extremely slow in js because we have to use strings as cache keys
+  Main issue is caching - it's extremely slow in js because we have to use strings as cache keys
 */
 
 type Blueprint = { 
@@ -166,10 +167,7 @@ const runBlueprint = (
 }
 
 // Setup: i7-1065H, 16GB RAM node v17.8.0
-let t = Date.now();
-const blueprintQualities = blueprints.map(b => runBlueprint(b, 24, 0, 0, 0, 0, 1, 0, 0, 0) * b.id)
-const blueprintsQuality = blueprintQualities.reduce((a,b) => a + b, 0);
-const blueprintsQualityTimeMs = Date.now() - t;
-
-log(blueprintQualities)
-console.log("Part One", blueprintsQuality, `took ${blueprintsQualityTimeMs}ms`);
+runPart("One", () => {
+  const blueprintQualities = blueprints.map(b => runBlueprint(b, 24, 0, 0, 0, 0, 1, 0, 0, 0) * b.id)
+  return blueprintQualities.reduce((a,b) => a + b, 0);
+});
