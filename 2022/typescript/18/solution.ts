@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import { runPart } from '../lib';
 
 const cubes = fs.readFileSync('./input.txt', 'utf-8').split('\r\n')
   .map(line => line.split(',')
@@ -72,14 +73,5 @@ const outsideSurfaceArea = () => {
 }
 
 // Setup: i7-1065H, 16GB RAM node v17.8.0
-let t = Date.now();
-const dropletSurfaceArea = surfaceArea();
-const dropletSurfaceAreaTimeMs = Date.now() - t;
-
-console.log("Part One", dropletSurfaceArea, `took ${dropletSurfaceAreaTimeMs}ms`); // 3346 took 136ms
-
-t = Date.now();
-const dropletOutsideSurfaceArea = outsideSurfaceArea();
-const dropletOutsideSurfaceAreaTimeMs = Date.now() - t;
-
-console.log("Part Two", dropletOutsideSurfaceArea, `took ${dropletOutsideSurfaceAreaTimeMs}ms`); // 1980 took 222943ms (3.7 minutes)
+runPart("One", () => surfaceArea()); // 3346 took 136ms
+runPart("Two", () => outsideSurfaceArea()); // 1980 took 207553ms (around 3 minutes)

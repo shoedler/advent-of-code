@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import { runPart } from '../lib';
 
 type Expr = number | string | { left: string, op: string, right: string };
 const lookup: { [key: string] : Expr } = {};
@@ -71,12 +72,5 @@ const findHumanValue = () => {
 }
 
 // Setup: i7-1065H, 16GB RAM node v17.8.0
-let t = Date.now();
-let rootValue = interpret('root');
-let duration = Date.now() - t;
-console.log("Part One", rootValue, `took ${duration}ms`); // 43699799094202 took 0ms
-
-t = Date.now();
-const humanValue = findHumanValue();
-duration = Date.now() - t;
-console.log("Part Two", humanValue, `took ${duration}ms`); // 3375719472770 took 6ms
+runPart("One", () => interpret('root')); // 43699799094202 took 0ms
+runPart("Two", () => findHumanValue()); // 3375719472770 took 6ms

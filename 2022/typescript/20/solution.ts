@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import { runPart } from '../lib';
 
 type Node = { value: number };
 
@@ -43,15 +44,13 @@ const findGrove = (nodes: Node[], iters: number) => {
 }
 
 // Setup: i7-1065H, 16GB RAM node v17.8.0
-let nodes = getNodes();
-let t = Date.now();
-let grove = findGrove(nodes, 1);
-let duration = Date.now() - t;
-console.log("Part One", grove, `took ${duration}ms`); // 11123 took 34ms
+runPart("One", () => {
+  let nodes = getNodes();
+  return findGrove(nodes, 1)
+}); // 11123 took 34ms
 
-nodes = getNodes();
-t = Date.now();
-nodes.map(n => n.value *= 811589153);
-grove = findGrove(nodes, 10);
-duration = Date.now() - t;
-console.log("Part One", grove, `took ${duration}ms`); // 4248669215955 took 271ms
+runPart("Two", () => {
+  let nodes = getNodes();
+  nodes.map(n => n.value *= 811589153);
+  return findGrove(nodes, 10)
+}); // 4248669215955 took 271ms

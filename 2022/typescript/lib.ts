@@ -1,4 +1,4 @@
-export const runPart = (part: 'One' | 'Two', solutionFn: () => number) => {
+export const runPart = (part: 'One' | 'Two', solutionFn: () => any) => {
   const start = Date.now();
   const result = solutionFn();
   const end = Date.now();

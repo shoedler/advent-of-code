@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import { runPart } from '../lib';
 
 const Flowrates: { [key: number]: number } = {};
 const Tunnels: { [key: number]: number[] } = {};
@@ -64,14 +65,6 @@ const maxRelief = memoize((valve: number, opened: number[], minutesLeft: number,
   return maxReliefed;
 });
 
-let t = Date.now();
-const maxReliefedPressure = maxRelief(ValveIds['AA'], [], 30, 'P1');
-const maxReliefTimeMs = Date.now() - t;
-
-t = Date.now();
-const maxReliefedPressureWithElephant = maxRelief(ValveIds['AA'], [], 26, 'P2');
-const maxReliefWithElephantTimeMs = Date.now() - t;
-
 // Config i7-11800H @ 2.3Ghz, 32GB RAM node v16.13.2
-console.log("Part One", maxReliefedPressure, `took ${maxReliefTimeMs}ms`); // 1460 took 89'821ms
-console.log("Part Two", maxReliefedPressureWithElephant, `took ${maxReliefWithElephantTimeMs}ms`); // 2117
+runPart("One", () => maxRelief(ValveIds['AA'], [], 30, 'P1')); // 1460 took 89'821ms
+runPart("Two", () => maxRelief(ValveIds['AA'], [], 26, 'P2')); // 2117 took ???ms
