@@ -26,17 +26,20 @@ Object.entries(valveDefs).forEach(([valveLabel, valve]) => {
   ValveIds[valveLabel] = valve.numId;
 });
 
-const cache: { [key: string]: number } = {};
+const cache: { [k in 'P1' | 'P2']: { [key: string]: number } } = {
+  'P1': {},
+  'P2': {},
+};
 
-const maxRelief = (valve: number, opened: string, minutesLeft: number, type: 'P1' | 'P2'): number => {
+const maxRelief = (valve: number, opened: string, minutesLeft: number, type: keyof typeof cache): number => {
   if (minutesLeft <= 0) {
     return type === 'P1' ? 0 : 
       maxRelief(ValveIds['AA'], opened, 26, 'P1');
   }
 
-  const cacheKey = `${valve},${minutesLeft},${type},` + opened;
-  if (cache[cacheKey] !== undefined)
-    return cache[cacheKey];
+  const cacheKey = `${valve},${minutesLeft},` + opened;
+  if (cache[type][cacheKey] !== undefined)
+    return cache[type][cacheKey];
 
   let maxReliefed = 0;
   
@@ -56,10 +59,10 @@ const maxRelief = (valve: number, opened: string, minutesLeft: number, type: 'P1
     maxReliefed = reliefed > maxReliefed ? reliefed : maxReliefed;
   });
 
-  cache[cacheKey] = maxReliefed;
+  cache[type][cacheKey] = maxReliefed;
   return maxReliefed;
 };
 
 // Config i7-1065H @ 2.3Ghz,  16GB RAM node v17.0.1
-runPart("One", () => maxRelief(ValveIds['AA'], "0".repeat(Object.keys(ValveIds).length), 30, 'P1')); // 1460 took 1573ms
+runPart("One", () => maxRelief(ValveIds['AA'], "0".repeat(Object.keys(ValveIds).length), 30, 'P1')); // 1460 took 1299ms
 runPart("Two", () => maxRelief(ValveIds['AA'], "0".repeat(Object.keys(ValveIds).length), 26, 'P2')); // 2117 took ???ms
