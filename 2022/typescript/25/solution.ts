@@ -41,16 +41,6 @@ const intToSNAFU = (n: number): string => {
   return result;
 }
 
-const snafuSamples = ["1","2","1=","1-","10","11","12","2=","2-","20","1=0","1-0","1=11-2","1-0---0","1121-1110-1=0"];
-const snafuResults = ["1","2","3","4","5","6","7","8","9","10","15","20","2022","12345","314159265"];
-const snafuSampleResults = snafuSamples.map(snafu => {
-  const result = parseSNAFU(snafu);
-  const expected = parseInt(snafuResults[snafuSamples.indexOf(snafu)]);
-  assert(result === expected, `Expected ${expected}, got ${result}`);
-  return { original: snafu, expected, parseSNAFU: result, intToSNAFU: intToSNAFU(expected) };
-});
-table(snafuSampleResults);
-
 const fuelRequirements = fs.readFileSync('./input.txt', 'utf-8').split('\r\n').map(parseSNAFU);
 const fuelRequirementsSum = fuelRequirements.reduce((a, b) => a + b, 0);
 
