@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import { runPart } from '../lib';
+import { Hashmap, runPart } from '../lib';
 
 const Flowrates: { [key: number]: number } = {};
 const Tunnels: { [key: number]: number[] } = {};
@@ -26,45 +26,40 @@ Object.entries(valveDefs).forEach(([valveLabel, valve]) => {
   ValveIds[valveLabel] = valve.numId;
 });
 
+const cache: { [key: string]: number } = {};
 
-const memoize = (fn: (valve: number, opened: number[], minutesLeft: number, type: 'P1' | 'P2') => any) => {
-  const cache: { [key:string]: any }  = {};
-  return (valve: number, opened: number[], minutesLeft: number, type: 'P1' | 'P2') => {
-    const cacheKey = `${valve}|${opened.join('.')}|${minutesLeft}|${type}`
-
-    if (!cache[cacheKey]) {
-      cache[cacheKey] = fn(valve, opened, minutesLeft, type)
-    }
-    return cache[cacheKey];
-  }
-}
-
-
-const maxRelief = memoize((valve: number, opened: number[], minutesLeft: number, type: 'P1' | 'P2'): number => {
+const maxRelief = (valve: number, opened: string, minutesLeft: number, type: 'P1' | 'P2'): number => {
   if (minutesLeft <= 0) {
     return type === 'P1' ? 0 : 
       maxRelief(ValveIds['AA'], opened, 26, 'P1');
   }
 
-  let maxReliefed = 0;
+  const cacheKey = `${valve},${minutesLeft},${type},` + opened;
+  if (cache[cacheKey] !== undefined)
+    return cache[cacheKey];
 
-  if (!opened.includes(valve) && Flowrates[valve] > 0) {
+  let maxReliefed = 0;
+  
+  // Unopened
+  if (opened[valve] === '0' && Flowrates[valve] > 0) {
     const valveRelief = (minutesLeft - 1) * Flowrates[valve];
+    const newOpened = opened.slice(0, valve) + '1' + opened.slice(valve + 1);
     Tunnels[valve].forEach(nextValve => {
-      const reliefed = valveRelief + maxRelief(nextValve, opened.concat(valve), minutesLeft - 2, type)
+      const reliefed = valveRelief + maxRelief(nextValve, newOpened, minutesLeft - 2, type)
       maxReliefed = reliefed > maxReliefed ? reliefed : maxReliefed;
     });
   }
 
-  // Unopened
+  // Opened
   Tunnels[valve].forEach(nextValve => {
     const reliefed = maxRelief(nextValve, opened, minutesLeft - 1, type)
     maxReliefed = reliefed > maxReliefed ? reliefed : maxReliefed;
   });
 
+  cache[cacheKey] = maxReliefed;
   return maxReliefed;
-});
+};
 
-// Config i7-11800H @ 2.3Ghz, 32GB RAM node v16.13.2
-runPart("One", () => maxRelief(ValveIds['AA'], [], 30, 'P1')); // 1460 took 89'821ms
-runPart("Two", () => maxRelief(ValveIds['AA'], [], 26, 'P2')); // 2117 took ???ms
+// Config i7-1065H @ 2.3Ghz,  16GB RAM node v17.0.1
+runPart("One", () => maxRelief(ValveIds['AA'], "0".repeat(Object.keys(ValveIds).length), 30, 'P1')); // 1460 took 1573ms
+runPart("Two", () => maxRelief(ValveIds['AA'], "0".repeat(Object.keys(ValveIds).length), 26, 'P2')); // 2117 took ???ms
