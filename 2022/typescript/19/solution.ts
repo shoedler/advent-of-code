@@ -1,13 +1,5 @@
 import * as fs from 'fs';
-import { runPart } from '../lib';
-const { log } = console;
-
-/* 
-  This solution does probably work (for Part 1) but it's way too slow. 🐌 It'll probably take a few
-  hours to solve part 1.
-  Implemented the same approach with c++ (/2022/c++/19) which solves both parts in about 10s.
-  Main issue is caching - it's extremely slow in js because we have to use strings as cache keys
-*/
+import { Cachemap, runPart } from '../lib';
 
 type Blueprint = { 
   id: number,
@@ -17,7 +9,7 @@ type Blueprint = {
   geodeRobotCost: { ore: number, obsidian: number } 
 };
 
-const blueprints: Blueprint[] = fs.readFileSync('./input.ext', 'utf-8').split('\r\n')
+const blueprints: Blueprint[] = fs.readFileSync('./input.txt', 'utf-8').split('\r\n')
   .map(line => {
     const matches = /Blueprint (\d+): Each ore robot costs (\d+) ore. Each clay robot costs (\d+) ore. Each obsidian robot costs (\d+) ore and (\d+) clay. Each geode robot costs (\d+) ore and (\d+) obsidian./.exec(line)
 
@@ -30,7 +22,8 @@ const blueprints: Blueprint[] = fs.readFileSync('./input.ext', 'utf-8').split('\
     }
   });
 
-const cache: { [key: string]: number } = {};
+const cache: Cachemap<string, number> = new Cachemap();
+
 const runBlueprint = (
   blueprint: Blueprint, 
   minutes: number, 
@@ -77,15 +70,12 @@ const runBlueprint = (
   
   const cacheKey = `${blueprint.id}|${minutes}|${ore}|${clay}|${obsidian}|${geodes}|${robotsOre}|${robotsClay}|${robotsObsidian}|${robotsGeodes}`
 
-  if (Object.keys(cache).length % 1_000 === 0) 
-    log(cacheKey, geodes, Object.keys(cache).length)
-  
-  if (cache[cacheKey] !== undefined) 
-    return cache[cacheKey]
+  if (cache.has(cacheKey)) 
+    return cache.get(cacheKey)
 
-  cache[cacheKey] = geodes
+  cache.put(cacheKey, geodes);
 
-  let maxGeodes = 0;
+  let mostGeodes = 0;
 
   const canBuyOreRobot = ore >= blueprint.oreRobotCost.ore;
   const canBuyClayRobot = ore >= blueprint.clayRobotCost.ore;
@@ -104,7 +94,7 @@ const runBlueprint = (
       robotsClay,
       robotsObsidian,
       robotsGeodes);
-    maxGeodes = g > maxGeodes ? g : maxGeodes;
+    mostGeodes = g > mostGeodes ? g : mostGeodes;
   }
 
   if (canBuyGeodeRobot) {  
@@ -118,7 +108,7 @@ const runBlueprint = (
       robotsClay,
       robotsObsidian,
       robotsGeodes + 1);
-    maxGeodes = g > maxGeodes ? g : maxGeodes;
+    mostGeodes = g > mostGeodes ? g : mostGeodes;
   }
 
   if (canBuyObsidianRobot) {
@@ -132,7 +122,7 @@ const runBlueprint = (
       robotsClay,
       robotsObsidian + 1,
       robotsGeodes);
-    maxGeodes = g > maxGeodes ? g : maxGeodes;
+    mostGeodes = g > mostGeodes ? g : mostGeodes;
   }
 
   if (canBuyClayRobot) {
@@ -146,7 +136,7 @@ const runBlueprint = (
       robotsClay + 1,
       robotsObsidian,
       robotsGeodes);
-    maxGeodes = g > maxGeodes ? g : maxGeodes;
+    mostGeodes = g > mostGeodes ? g : mostGeodes;
   }
 
   if (canBuyOreRobot) {
@@ -160,14 +150,12 @@ const runBlueprint = (
       robotsClay,
       robotsObsidian,
       robotsGeodes);
-    maxGeodes = g > maxGeodes ? g : maxGeodes;
+    mostGeodes = g > mostGeodes ? g : mostGeodes;
   }
 
-  return maxGeodes;
+  return mostGeodes;
 }
 
 // Setup: i7-1065H, 16GB RAM node v17.8.0
-runPart("One", () => {
-  const blueprintQualities = blueprints.map(b => runBlueprint(b, 24, 0, 0, 0, 0, 1, 0, 0, 0) * b.id)
-  return blueprintQualities.reduce((a,b) => a + b, 0);
-});
+runPart("One", () => blueprints.map(b => runBlueprint(b, 24, 0, 0, 0, 0, 1, 0, 0, 0) * b.id).reduce((a, b) => a + b, 0)); // Part One: 960 took 8664ms
+runPart("Two", () => blueprints.slice(0, 3).map(b => runBlueprint(b, 32, 0, 0, 0, 0, 1, 0, 0, 0)).reduce((a, b) => a * b, 1)); // Part One: 2160 took 17897ms;
