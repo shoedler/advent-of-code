@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import { Hashmap, runPart } from '../lib';
+import { Cachemap, runPart } from '../lib';
 
 const Flowrates: { [key: number]: number } = {};
 const Tunnels: { [key: number]: number[] } = {};
@@ -26,20 +26,20 @@ Object.entries(valveDefs).forEach(([valveLabel, valve]) => {
   ValveIds[valveLabel] = valve.numId;
 });
 
-const cache: { [k in 'P1' | 'P2']: { [key: string]: number } } = {
-  'P1': {},
-  'P2': {},
+const cache: { [k in 'P1' | 'P2']: Cachemap<string, number> } = {
+  'P1': new Cachemap<string, number> (),
+  'P2': new Cachemap<string, number> (),
 };
 
-const maxRelief = (valve: number, opened: string, minutesLeft: number, type: keyof typeof cache): number => {
+const maxRelief = (valve: number, opened: string, minutesLeft: number, type: 'P1' | 'P2'): number => {
   if (minutesLeft <= 0) {
     return type === 'P1' ? 0 : 
       maxRelief(ValveIds['AA'], opened, 26, 'P1');
   }
 
   const cacheKey = `${valve},${minutesLeft},` + opened;
-  if (cache[type][cacheKey] !== undefined)
-    return cache[type][cacheKey];
+  if (cache[type].has(cacheKey))
+    return cache[type].get(cacheKey)!;
 
   let maxReliefed = 0;
   
@@ -59,10 +59,10 @@ const maxRelief = (valve: number, opened: string, minutesLeft: number, type: key
     maxReliefed = reliefed > maxReliefed ? reliefed : maxReliefed;
   });
 
-  cache[type][cacheKey] = maxReliefed;
+  cache[type].put(cacheKey, maxReliefed);
   return maxReliefed;
 };
 
 // Config i7-1065H @ 2.3Ghz,  16GB RAM node v17.0.1
 runPart("One", () => maxRelief(ValveIds['AA'], "0".repeat(Object.keys(ValveIds).length), 30, 'P1')); // 1460 took 1299ms
-runPart("Two", () => maxRelief(ValveIds['AA'], "0".repeat(Object.keys(ValveIds).length), 26, 'P2')); // 2117 took ???ms
+runPart("Two", () => maxRelief(ValveIds['AA'], "0".repeat(Object.keys(ValveIds).length), 26, 'P2')); // 2117 took 57707ms

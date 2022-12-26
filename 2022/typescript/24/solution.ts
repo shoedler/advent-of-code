@@ -1,4 +1,3 @@
-import { log } from 'console';
 import * as fs from 'fs';
 import { Hashmap, Hashset, runPart } from '../lib';
 
@@ -107,6 +106,7 @@ let startToTarget: any = null;
 let backToStart: any = null;
 let backToTarget: any = null;
 
+// Setup: i7-1065H, 16GB RAM node v17.8.0
 runPart("One", () => {
   startToTarget = shortestSafePath(Blizzards, [0, 1], [maxWallCol, maxWallRow - 1]);
   return startToTarget.time;
@@ -116,4 +116,4 @@ runPart("Two", () => {
   backToStart = shortestSafePath(startToTarget.blizzardsConfig, [maxWallCol, maxWallRow - 1], [0, 1]);
   backToTarget = shortestSafePath(backToStart.blizzardsConfig, [0, 1], [maxWallCol, maxWallRow - 1]);
   return startToTarget.time + backToStart.time + backToTarget.time;
-}); // 711 took 7249ms
+}); // 711 took 5933ms
