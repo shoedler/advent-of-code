@@ -1,9 +1,80 @@
-export const runPart = (part: 'One' | 'Two', solutionFn: () => any) => {
-  const start = Date.now();
-  const result = solutionFn();
-  const end = Date.now();
-  console.log(`Part ${part}`, result, `took ${end - start}ms`);
+import 'node:process'
+
+/**
+ * Runs the specified function and logs its result, execution time, and heap usage to the console.
+ *
+ * @param {('One' | 'Two')} part - The part of the Advent of Code challenge being solved.
+ * @param {Function} fn - The function to run.
+ * @param {boolean} [showPerfInfo=false] - Whether to show detailed performance information in addition to the summary log.
+ * @returns {void}
+ */
+const runPart = (part: 'One' | 'Two', fn: () => any | Promise<any>, showPerfInfo: boolean = false) => {
+  const startNanoseconds = process.hrtime.bigint();
+  const startHeapBytesUsed = process.memoryUsage().heapUsed;
+  let value = fn() ?? 'None';
+
+  if (!(value instanceof Promise)) {
+    value = Promise.resolve(value);
+  }
+
+  value.then((result: any) => {
+    const endNanoseconds = process.hrtime.bigint();
+    const endHeapBytesUsed = process.memoryUsage().heapUsed;
+  
+    const nanoseconds = Number(endNanoseconds - startNanoseconds);
+
+    const duration = ((ns: number) => {
+      const ms = ns / 1_000_000;
+
+      const hours = Math.floor(ms / (1000 * 60 * 60));
+      const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((ms % (1000 * 60)) / 1000);
+      const milliseconds = Math.floor(ms % 1000);
+      const nanoseconds = ns % 1_000_000;
+
+      return (hours ? `${hours}h:` : "") +
+        ((minutes || hours) ? `${minutes.toString().padStart(2, '0')}m:` : "") + 
+        ((seconds || minutes || hours) ? `${seconds.toString().padStart(2, '0')}s.` : "") + 
+        `${milliseconds.toString().padStart(3, '0')}ms.` + 
+        `${nanoseconds.toString().padStart(6, '0')}ns`;
+    })(Math.floor(nanoseconds));
+  
+    const milliseconds = nanoseconds / 1_000_000;
+
+    const heapBytesUsed = endHeapBytesUsed - startHeapBytesUsed;
+    const heapMegabytesUsed = heapBytesUsed / 1_000_000;
+  
+    console.log(`Part ${part}: ${result} took ${milliseconds}ms, allocated ${heapMegabytesUsed}MB on the heap.`);
+    
+    if (showPerfInfo) {
+      console.log({
+        milliseconds,
+        duration,
+        heapBytesUsed,
+        heapMegabytesUsed,
+      });
+    }
+  })
 }
+
+/**
+ * Executes a given function and returns its result, or a fallback value if the function throws an error.
+ *
+ * @export
+ * @template T
+ * @param {() => T} fn - The function to execute.
+ * @param {T} fallback - The fallback value to return if the function throws an error.
+ * @returns {T} The result of the function, or the fallback value if the function throws an error.
+ */
+export const tryOrDefault = <T>(fn: () => T, fallback: T): T => {
+  try {
+    return fn();
+  } catch {
+    return fallback;
+  }
+}
+
+export const range = (from: number, to: number) => new Array(to-from).fill(0).map(_ => from++);
 
 /**
  * Arbitrary large dictionary / map implementation which can take up to 16'777'216 * 4'294'967'295 items.
@@ -102,5 +173,3 @@ export class Hashset<K> {
   public items = (): K[] => Object.keys(this.hashes).map(e => this.unhash(e));
   public size = (): number => Object.keys(this.hashes).length;
 }
-
-export const range = (from: number, to: number) => new Array(to-from).fill(0).map(_ => from++);
