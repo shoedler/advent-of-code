@@ -1,9 +1,0 @@
-{
-  "devDependencies": {
-    "@types/node": "^18.11.13",
-    "ts-node": "^10.9.1"
-  },
-  "scripts": {
-    "start": "node run.js"
-  }
-}

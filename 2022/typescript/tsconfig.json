@@ -4,6 +4,6 @@
     "moduleResolution": "node",
     "target": "esnext",
   },
-  "include": ["./**/*"],
+  "include": ["./**/*", "../../lib.ts"],
   "exclude": ["node_modules", "**/*.spec.ts"]
 }
