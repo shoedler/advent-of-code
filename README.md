@@ -2,10 +2,10 @@
 
 ## TypeScript Solutions
 
-## Prerequisites
+### Prerequisites
 
-- node (>= v16.13.1)
-- npm (>= 8.1.2)
+- `node` ($\ge$ v16.13.1)
+- `npm` ($\ge$ 8.1.2)
 
 ### Build & Run
 
@@ -38,9 +38,9 @@ See [lib.ts](https://github.com/shoedler/advent-of-code/blob/master/2022/typescr
 
 ### Prerequisites
 
-- rustup >= 1.25.1
-- rustc >= 1.65.0
-- cargo >= 1.65.0
+- `rustup` $\ge$ 1.25.1
+- `rustc` $\ge$ 1.65.0
+- `cargo` $\ge$ 1.65.0
 
 ### Build & Run
 
