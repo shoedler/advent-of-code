@@ -84,6 +84,16 @@ export const tryOrDefault = <T>(fn: () => T, fallback: T): T => {
   }
 };
 
+/**
+ * Creates an array of numbers in the specified range.
+ *
+ * @param {number} from - The start of the range. If greater than `to`, the range will be in descending order.
+ * @param {number} to - The end of the range. If less than `from`, the range will be in descending order.
+ * @returns {number[]}
+ * @example
+ * range(1, 5); // [1, 2, 3, 4, 5]
+ * range(5, 1); // [5, 4, 3, 2, 1]
+ */
 export const range = (from: number, to: number) => {
   if (from > to) return new Array(from + 1 - to).fill(0).map((_) => from--);
   return new Array(to + 1 - from).fill(0).map((_) => from++);
