@@ -100,6 +100,49 @@ export const range = (from: number, to: number) => {
 };
 
 /**
+ * Array Extensions
+ *
+ */
+declare global {
+  interface Array<T> {
+    /**
+     * Executes the specified function for each element of the array and returns the array.
+     * Does not modify the array. In-place.
+     *
+     * @template T
+     * @param {(value: T, index: number, array: T[]) => void} callbackfn - The function to execute for each element.
+     * @returns {T[]} The unchanged array.
+     */
+    tap(callbackfn: (value: T, index: number, array: T[]) => void): T[];
+
+    /**
+     * Returns the first `n` elements of the array, if `n>0`.
+     * Othwise it returns the last `n` elements, but not in reverse order.
+     * If `n` is greater than the length of the array, it returns the whole array.
+     *
+     * @template T
+     * @param {number} n - The number of elements to take.
+     * @returns {T[]} The array
+     */
+    take(n: number): T[];
+  }
+}
+
+Array.prototype.tap = function <T>(
+  callbackfn: (value: T, index: number, array: T[]) => void
+): T[] {
+  for (let i = 0; i < this.length; i++) {
+    callbackfn(this[i], i, this);
+  }
+  return this;
+};
+
+Array.prototype.take = function <T>(n: number): T[] {
+  if (n > 0) return this.slice(0, n);
+  return this.slice(n);
+};
+
+/**
  * Arbitrary large dictionary / map implementation which can take up to 16'777'216 * 4'294'967'295 items.
  * Max size of a map in V8 is [2^24](https://stackoverflow.com/a/54466812) (16'777'216).
  * Max size of an array in V8 is [2^32 - 2](https://stackoverflow.com/a/28586666) (4'294'967'295).
