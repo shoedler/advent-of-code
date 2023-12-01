@@ -84,8 +84,10 @@ export const tryOrDefault = <T>(fn: () => T, fallback: T): T => {
   }
 };
 
-export const range = (from: number, to: number) =>
-  new Array(to - from).fill(0).map((_) => from++);
+export const range = (from: number, to: number) => {
+  if (from > to) return new Array(from + 1 - to).fill(0).map((_) => from--);
+  return new Array(to + 1 - from).fill(0).map((_) => from++);
+};
 
 /**
  * Arbitrary large dictionary / map implementation which can take up to 16'777'216 * 4'294'967'295 items.
