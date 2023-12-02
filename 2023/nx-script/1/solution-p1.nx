@@ -34,9 +34,9 @@ let sum = 0;
 let i = 0;
 
 while i < len(lines) {
-    let sol = solve(lines[i]);
-    sum = sum + sol
+    let calib_val = get_calibration_values_of_line(lines[i]);
+    sum = sum + calib_val;
     i = i + 1;
 }
 
-print("Sum:", sum); // 54951
+print("Sum:", sum); // 54951 took 507ms (Debug build)
