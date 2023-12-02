@@ -1,0 +1,42 @@
+let fn is_str_digit = x -> 
+    x == "0" || x == "1" || x == "2" || x == "3" || x == "4" || 
+    x == "5" || x == "6" || x == "7" || x == "8" || x == "9";
+
+let fn get_calibration_values_of_line = str_line -> {
+    let arr = []+str_line; // str to array will split by char
+    let arr_len = len(arr);
+
+    let first_no = "";
+    let last_no = "";
+
+    let i = 0;
+    let j = arr_len - 1;
+
+    // only while loops exist - currently
+    while i < arr_len && j >= 0 {
+        if first_no == "" && is_str_digit(arr[i]) first_no = arr[i];
+        if last_no == "" && is_str_digit(arr[j]) last_no = arr[j];
+        
+        i = i + 1; 
+        j = j - 1;
+    }
+
+    if (first_no == "") first_no = last_no;
+    if (last_no == "") last_no = first_no;
+
+    let str_no = first_no + last_no; // str concat
+
+    ret (0+str_no); // str to num
+}
+
+let lines = split_by_newline(read(cwd + "/input.txt"));
+let sum = 0;
+let i = 0;
+
+while i < len(lines) {
+    let sol = solve(lines[i]);
+    sum = sum + sol
+    i = i + 1;
+}
+
+print("Sum:", sum); // 54951
