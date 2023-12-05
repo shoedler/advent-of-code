@@ -33,19 +33,50 @@ const mapRange = (
   const outputRanges = [];
   let ranges = inputRanges;
 
-  for (const [argDest, argSource, argSize] of mapping) {
-    const argEnd = argSource + argSize;
+  for (const [argDest, argStart, argSize] of mapping) {
+    const argEnd = argStart + argSize;
     const newRanges = [];
 
     while (ranges.length) {
       const [inStart, inEnd] = ranges.pop();
 
-      const pre = [inStart, Math.min(inEnd, argSource)];
-      const inside = [Math.max(inStart, argSource), Math.min(argEnd, inEnd)];
+      // Intersect
+      const pre = [inStart, Math.min(inEnd, argStart)];
+      const inside = [Math.max(inStart, argStart), Math.min(argEnd, inEnd)];
       const post = [Math.max(argEnd, inStart), inEnd];
 
-      // If arg interval is not inside the input interval, (or they overlap in some other way) then we have to
-      // prcess the trimmings (pre, post) again with the next mapping.
+      // Case 1
+      // █████████████       <- input
+      //      ██████████████ <- arg
+      // ──────────────────────────────────────
+      // ░░░░░               <- pre
+      //      ▓▓▓▓▓▓▓▓       <- inside
+      //              ▒▒▒▒▒▒ <- post (reversed)
+
+      // Case 2
+      //      ██████████████ <- input
+      // █████████████       <- arg
+      // ──────────────────────────────────────
+      // ░░░░░               <- pre (reversed)
+      //      ▓▓▓▓▓▓▓▓       <- inside
+      //              ▒▒▒▒▒▒ <- post
+
+      // Case 3
+      //              ██████ <- input
+      // ██████              <- arg
+      // ──────────────────────────────────────
+      // ░░░░░░░░░░░░░       <- pre (reversed)
+      //       ▓▓▓▓▓▓▓       <- inside (reversed)
+      //              ▒▒▒▒▒▒ <- post
+
+      // Case 4
+      // ██████              <- input
+      //               █████ <- arg
+      // ──────────────────────────────────────
+      // ░░░░░░              <- pre
+      //       ▓▓▓▓▓▓▓▓      <- inside (reversed)
+      //       ▒▒▒▒▒▒▒▒▒▒▒▒▒ <- post (reversed)
+
       if (pre[1] > pre[0]) {
         newRanges.push(pre);
       }
@@ -56,8 +87,8 @@ const mapRange = (
 
       if (inside[1] > inside[0]) {
         outputRanges.push([
-          inside[0] - argSource + argDest,
-          inside[1] - argSource + argDest,
+          inside[0] - argStart + argDest,
+          inside[1] - argStart + argDest,
         ]);
       }
     }
