@@ -222,6 +222,7 @@ export class Hashmap<K, V> {
   public get = (key: K): V => this.hashes[this.hash(key)];
   public items = (): [K, V][] =>
     Object.entries(this.hashes).map(([k, v]) => [this.unhash(k), v]);
+  public values = (): V[] => Object.values(this.hashes);
   public size = (): number => Object.keys(this.hashes).length;
 }
 
