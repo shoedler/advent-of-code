@@ -1,4 +1,10 @@
+<img src="https://github.com/shoedler/advent-of-code/assets/38029550/f6bd24af-060a-4762-806d-b01d310dee01" style="width: 70%; margin-left:auto; margin-right:auto; display:block;">
+
+> Made with Fooocus!
+
 # advent-of-code
+
+My advent of code solutions
 
 ## TypeScript Solutions
 
