@@ -5,9 +5,9 @@ console.clear();
 const universe = fs
   .readFileSync("./input.txt", "utf8")
   .split("\r\n")
-  .map((line) => line.split(""));
+  .map(line => line.split(""));
 
-console.assert(universe.every((l) => l.length === universe[0].length));
+console.assert(universe.every(l => l.length === universe[0].length));
 
 type Vec = [number, number];
 
@@ -24,40 +24,41 @@ universe.forEach((line, y) =>
   })
 );
 
-const emptyRows = universe.map((row, y) => {
-  row.every((_, x) => !galaxies.has([x, y]));
-  return y;
-});
+const emptyRows = universe
+  .map((row, y) => (row.every((_, x) => !galaxies.has([x, y])) ? y : undefined))
+  .filter(Boolean);
 
-const emptyCols = universe[0].map((_, x) => {
-  universe.every((_, y) => !galaxies.has([x, y]));
-  return x;
-});
+const emptyCols = universe[0]
+  .map((_, x) =>
+    universe.every((_, y) => !galaxies.has([x, y])) ? x : undefined
+  )
+  .filter(Boolean);
+
+const allGalaxies = galaxies.items();
 
 const calcUniverseExpansion = (expansionRate: number) => {
   let sum = 0;
-  const allGalaxies = galaxies.items();
 
   for (let i = 0; i < allGalaxies.length; i++) {
     const [x1, y1] = allGalaxies[i];
     for (let j = i + 1; j < allGalaxies.length; j++) {
       const [x2, y2] = allGalaxies[j];
+
       const [minX, maxX] = [x1, x2].sort((a, b) => a - b);
       const [minY, maxY] = [y1, y2].sort((a, b) => a - b);
-      const dist = Math.abs(x1 - x2) + Math.abs(y1 - y2);
 
-      const yFactor = emptyRows.filter((y) => y > minY && y < maxY).length;
-      const xFactor = emptyCols.filter((x) => x > minX && x < maxX).length;
+      const spaces =
+        emptyRows.filter(y => y > minY && y < maxY).length +
+        emptyCols.filter(x => x > minX && x < maxX).length;
 
-      sum += dist + expansionRate * (xFactor + yFactor);
+      const manhattan = Math.abs(x1 - x2) + Math.abs(y1 - y2);
+
+      sum += manhattan - spaces + expansionRate * spaces;
     }
   }
 
   return sum;
 };
 
-const partOne = () => calcUniverseExpansion(1);
-const partTwo = () => calcUniverseExpansion(1_000_000);
-
-runPart("One", partOne); // 10422930 took 25.9983ms, allocated 4.94892MB on the heap.
-runPart("Two", partTwo); // 699909723030 took 12.9595ms, allocated 2.395296MB on the heap. 699909023130
+runPart("One", () => calcUniverseExpansion(2)); // 10422930 took 25.9983ms, allocated 4.94892MB on the heap.
+runPart("Two", () => calcUniverseExpansion(1e6)); // 699909023130 took 12.9595ms, allocated 2.395296MB on the heap.
