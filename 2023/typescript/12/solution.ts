@@ -10,7 +10,7 @@ type Record = {
 const records: Record[] = fs
   .readFileSync("./input.txt", "utf8")
   .split("\r\n")
-  .map((record) => {
+  .map(record => {
     const [plan, groups] = record.split(" ");
     return {
       plan,
@@ -41,69 +41,32 @@ const findAllArrangements = (
 
   let vars = 0;
 
-  for (const option of [".", "#"]) {
-    // plan[pi] === '.' || '#' and plan[pi] !== '?'
-    if (plan[planIndex] !== "?") {
-      if (plan[planIndex] !== option) continue;
-    }
-    // Here, plan[pi] === '?'
+  const isDot = plan[planIndex] === ".";
+  const isHash = plan[planIndex] === "#";
+  const isQuestion = plan[planIndex] === "?";
 
-    if (option === "." && variations === 0) {
-      vars += findAllArrangements(rec, planIndex + 1, groupIndex, variations);
-      continue;
-    }
-
-    if (
-      option === "." &&
-      variations > 0 &&
-      groupIndex < groups.length &&
-      groups[groupIndex] === variations
-    ) {
-      vars += findAllArrangements(rec, planIndex + 1, groupIndex + 1, 0);
-      continue;
-    }
-
-    if (option === "#") {
-      vars += findAllArrangements(
-        rec,
-        planIndex + 1,
-        groupIndex,
-        variations + 1
-      );
-      continue;
-    }
+  if ((isDot || isQuestion) && variations === 0) {
+    vars += findAllArrangements(rec, planIndex + 1, groupIndex, variations);
   }
 
-  // if (plan[planIndex] !== "?") {
-  //   return vars;
-  // }
+  if (
+    (isDot || isQuestion) &&
+    variations > 0 &&
+    groupIndex < groups.length &&
+    groups[groupIndex] === variations
+  ) {
+    vars += findAllArrangements(rec, planIndex + 1, groupIndex + 1, 0);
+  }
 
-  // if (plan[planIndex] === "." && variations === 0) {
-  //   vars += findAllArrangements(rec, planIndex + 1, groupIndex, variations);
-  // }
-  // if (variations === 0) {
-  //   vars += findAllArrangements(rec, planIndex + 1, groupIndex, variations);
-  // }
-  // if (
-  //   plan[planIndex] === "." &&
-  //   variations > 0 &&
-  //   groupIndex < groups.length &&
-  //   groups[groupIndex] === variations
-  // ) {
-  //   vars += findAllArrangements(rec, planIndex + 1, groupIndex + 1, 0);
-  // }
-
-  // if (plan[planIndex] === "#") {
-  //   vars += findAllArrangements(rec, planIndex + 1, groupIndex, variations + 1);
-  // }
+  if (isHash || isQuestion) {
+    vars += findAllArrangements(rec, planIndex + 1, groupIndex, variations + 1);
+  }
 
   return vars;
 };
 
 const partOne = () =>
-  records
-    .map((rec) => findAllArrangements(rec, 0, 0, 0))
-    .reduce((a, b) => a + b);
+  records.map(rec => findAllArrangements(rec, 0, 0, 0)).reduce((a, b) => a + b);
 const partTwo = () => 2;
 
 runPart("One", partOne); // 7622 took 6.4203ms, allocated 4.700504MB on the vm-heap.
