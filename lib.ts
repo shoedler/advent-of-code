@@ -224,6 +224,7 @@ export class Hashmap<K, V> {
     Object.entries(this.hashes).map(([k, v]) => [this.unhash(k), v]);
   public values = (): V[] => Object.values(this.hashes);
   public size = (): number => Object.keys(this.hashes).length;
+  public clear = () => (this.hashes = {});
 }
 
 /**
@@ -244,4 +245,5 @@ export class Hashset<K> {
   public remove = (key: K): boolean => delete this.hashes[this.hash(key)];
   public items = (): K[] => Object.keys(this.hashes).map(e => this.unhash(e));
   public size = (): number => Object.keys(this.hashes).length;
+  public clear = () => (this.hashes = {});
 }
