@@ -28,7 +28,7 @@ const findReflection = (map: string[], smudge = false): number => {
       }
     } while (--left >= 0 && ++right < cols);
 
-    if ((diff === 0 && !smudge) || (smudge && diff === 1)) {
+    if (diff === (smudge ? 1 : 0)) {
       sum += col + 1;
       break;
     }
@@ -47,7 +47,7 @@ const findReflection = (map: string[], smudge = false): number => {
       }
     } while (--top >= 0 && ++bottom < rows);
 
-    if ((diff === 0 && !smudge) || (smudge && diff === 1)) {
+    if (diff === (smudge ? 1 : 0)) {
       sum += 100 * (row + 1);
       break;
     }
