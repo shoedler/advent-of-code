@@ -1,107 +1,72 @@
 import * as fs from "fs";
 import { runPart } from "../../../lib";
+import { assert } from "console";
 console.clear();
 
 const maps = fs
   .readFileSync("./input.txt", "utf8")
   .split("\r\n\r\n")
-  .map((map) => map.split("\r\n"));
+  .map(map => map.split("\r\n"));
 
-const findHorizontalReflections = (map: string[]): number => {
-  const reflectionCenters = [];
-  for (let i = 1; i < map.length; i++) {
-    let ptrTop = i - 1;
-    let ptrBottom = i;
+const findReflection = (map: string[], smudge = false): number => {
+  let sum = 0;
 
-    let reflects = true;
-    while (ptrTop >= 0 && ptrBottom < map.length) {
-      if (map[ptrTop] !== map[ptrBottom]) {
-        reflects = false;
-        break;
+  const rows = map.length;
+  const cols = map[0].length;
+
+  // Vertical
+  for (let col = 0; col < cols - 1; col++) {
+    let diff = 0;
+    let left = col;
+    let right = col + 1;
+
+    do {
+      for (let row = 0; row < rows; row++) {
+        if (map[row][left] !== map[row][right]) {
+          diff++;
+        }
       }
+    } while (--left >= 0 && ++right < cols);
 
-      ptrTop--;
-      ptrBottom++;
-    }
-
-    if (reflects) {
-      reflectionCenters.push(i);
+    if ((diff === 0 && !smudge) || (smudge && diff === 1)) {
+      sum += col + 1;
+      break;
     }
   }
-  return reflectionCenters.length ? Math.max(...reflectionCenters) : 0;
-};
 
-const findVerticalReflections = (map: string[]): number => {
-  const reflectionCenters = [];
-  for (let i = 1; i < map[0].length; i++) {
-    let ptrLeft = i - 1;
-    let ptrRight = i;
-
-    let reflects = true;
-    while (ptrLeft >= 0 && ptrRight < map[0].length) {
-      const leftSlice = map.map((row) => row[ptrLeft]).join("");
-      const rightSlice = map.map((row) => row[ptrRight]).join("");
-      if (leftSlice !== rightSlice) {
-        reflects = false;
-        break;
+  // Horizontal
+  for (let row = 0; row < rows - 1; row++) {
+    let diff = 0;
+    let top = row;
+    let bottom = row + 1;
+    do {
+      for (let col = 0; col < cols; col++) {
+        if (map[top][col] !== map[bottom][col]) {
+          diff++;
+        }
       }
+    } while (--top >= 0 && ++bottom < rows);
 
-      ptrLeft--;
-      ptrRight++;
-    }
-
-    if (reflects) {
-      reflectionCenters.push(i);
+    if ((diff === 0 && !smudge) || (smudge && diff === 1)) {
+      sum += 100 * (row + 1);
+      break;
     }
   }
-  return reflectionCenters.length ? Math.max(...reflectionCenters) : 0;
+
+  return sum;
 };
 
 const partOne = () =>
   maps
-    .map((map) => {
-      const hRef = findHorizontalReflections(map) * 100;
-      const vRef = findVerticalReflections(map);
-
-      return vRef + hRef;
-    })
+    .map(map => findReflection(map))
+    .tap(v => assert(v))
     .reduce((a, b) => a + b);
 
 const partTwo = () =>
   maps
-    .map((map) => {
-      const hRef = findHorizontalReflections(map) * 100;
-      const vRef = findVerticalReflections(map);
-      let ohRef = hRef;
-      let ovRef = vRef;
-
-      while (ohRef === hRef && ovRef === vRef) {
-        for (let y = 0; y < map.length; y++) {
-          for (let x = 0; x < map[0].length; x++) {
-            let newMap = [...map];
-            let line = newMap[y].split("");
-            if (line[x] === ".") line[x] = "#";
-            else line[x] = ".";
-            newMap[y] = line.join("");
-
-            ohRef = findHorizontalReflections(newMap) * 100;
-            ovRef = findVerticalReflections(newMap);
-
-            if ((ohRef !== hRef || ovRef !== vRef) && ohRef + ovRef > 0) {
-              if (ovRef === vRef) return hRef;
-              if (ohRef === hRef) return vRef;
-              throw new Error("Something went wrong");
-            }
-          }
-        }
-      }
-
-      if (ohRef === 0 && ovRef === 0) {
-        throw new Error("Something went wrong");
-      }
-      return ohRef + ovRef;
-    })
+    .map(map => findReflection(map, true))
+    .tap(v => assert(v))
     .reduce((a, b) => a + b);
 
-runPart("One", partOne); // 35360 took 1.8321ms, allocated 1.075056MB on the vm-heap.
-runPart("Two", partTwo); // 9814 too low 36755
+runPart("One", partOne); // 35360 took 11.1669ms, allocated 0.011696MB on the vm-heap.
+runPart("Two", partTwo); // 36755 took 5.3511ms, allocated 0.007064MB on the vm-heap.
