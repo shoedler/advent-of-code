@@ -10,61 +10,58 @@ import "node:process";
  */
 export const runPart = (
   part: "One" | "Two",
-  fn: () => any | Promise<any>,
+  fn: () => any,
   showPerfInfo: boolean = false
 ) => {
   const startNanoseconds = process.hrtime.bigint();
   const startHeapBytesUsed = process.memoryUsage().heapUsed;
-  let value = fn() ?? "None";
 
-  if (!(value instanceof Promise)) {
-    value = Promise.resolve(value);
+  let result = fn() ?? "Didn't return anything.";
+
+  const endNanoseconds = process.hrtime.bigint();
+  const endHeapBytesUsed = process.memoryUsage().heapUsed;
+
+  const perfInfo = calcPerfInfo(
+    Number(endNanoseconds - startNanoseconds),
+    endHeapBytesUsed - startHeapBytesUsed
+  );
+
+  console.log(
+    `Part ${part}: ${result} took ${perfInfo.duration}, allocated ${perfInfo.heapMegabytesUsed}MB on the vm-heap.`
+  );
+
+  if (showPerfInfo) {
+    console.log(perfInfo);
   }
+};
 
-  value.then((result: any) => {
-    const endNanoseconds = process.hrtime.bigint();
-    const endHeapBytesUsed = process.memoryUsage().heapUsed;
+const calcPerfInfo = (nanoseconds: number, heapBytesUsed: number) => {
+  const duration = ((ns: number) => {
+    const ms = ns / 1_000_000;
 
-    const nanoseconds = Number(endNanoseconds - startNanoseconds);
+    const hours = Math.floor(ms / (1000 * 60 * 60));
+    const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((ms % (1000 * 60)) / 1000);
+    const milliseconds = Math.floor(ms % 1000);
+    const nanoseconds = ns % 1_000_000;
 
-    const duration = ((ns: number) => {
-      const ms = ns / 1_000_000;
-
-      const hours = Math.floor(ms / (1000 * 60 * 60));
-      const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((ms % (1000 * 60)) / 1000);
-      const milliseconds = Math.floor(ms % 1000);
-      const nanoseconds = ns % 1_000_000;
-
-      return (
-        (hours ? `${hours}h:` : "") +
-        (minutes || hours ? `${minutes.toString().padStart(2, "0")}m:` : "") +
-        (seconds || minutes || hours
-          ? `${seconds.toString().padStart(2, "0")}s.`
-          : "") +
-        `${milliseconds.toString().padStart(3, "0")}ms.` +
-        `${nanoseconds.toString().padStart(6, "0")}ns`
-      );
-    })(Math.floor(nanoseconds));
-
-    const milliseconds = nanoseconds / 1_000_000;
-
-    const heapBytesUsed = endHeapBytesUsed - startHeapBytesUsed;
-    const heapMegabytesUsed = heapBytesUsed / 1_000_000;
-
-    console.log(
-      `Part ${part}: ${result} took ${milliseconds}ms, allocated ${heapMegabytesUsed}MB on the vm-heap.`
+    return (
+      (hours ? `${hours}h ` : "") +
+      (minutes || hours ? `${minutes}m ` : "") +
+      (seconds || minutes || hours ? `${seconds}s ` : "") +
+      `${milliseconds}.${nanoseconds.toString().padStart(6, "0")}ms`
     );
+  })(Math.floor(nanoseconds));
 
-    if (showPerfInfo) {
-      console.log({
-        milliseconds,
-        duration,
-        heapBytesUsed,
-        heapMegabytesUsed,
-      });
-    }
-  });
+  const milliseconds = nanoseconds / 1_000_000;
+  const heapMegabytesUsed = heapBytesUsed / 1_000_000;
+
+  return {
+    milliseconds,
+    duration,
+    heapBytesUsed,
+    heapMegabytesUsed,
+  };
 };
 
 /**
@@ -95,8 +92,8 @@ export const tryOrDefault = <T>(fn: () => T, fallback: T): T => {
  * range(5, 1); // [5, 4, 3, 2, 1]
  */
 export const range = (from: number, to: number) => {
-  if (from > to) return new Array(from + 1 - to).fill(0).map(_ => from--);
-  return new Array(to + 1 - from).fill(0).map(_ => from++);
+  if (from > to) return new Array(from + 1 - to).fill(0).map((_) => from--);
+  return new Array(to + 1 - from).fill(0).map((_) => from++);
 };
 
 /**
@@ -159,11 +156,11 @@ Array.prototype.take = function <T>(n: number): T[] {
 export class Cachemap<K, V> {
   private maps: Map<K, V>[] = [new Map()];
   public static readonly MAP_SIZE_LIMIT: number = 14_000_000;
-  public has = (key: K) => this.maps.some(map => map.has(key));
-  public get = (key: K) => this.maps.find(map => map.has(key))?.get(key);
+  public has = (key: K) => this.maps.some((map) => map.has(key));
+  public get = (key: K) => this.maps.find((map) => map.has(key))?.get(key);
   public size = () => this.maps.reduce((acc, map) => acc + map.size, 0);
   public put(key: K, value: V) {
-    let map = this.maps.find(map => map.has(key));
+    let map = this.maps.find((map) => map.has(key));
     if (map) {
       map.set(key, value);
       return this;
@@ -178,25 +175,25 @@ export class Cachemap<K, V> {
     return this;
   }
   public delete = (key: K) => {
-    const map = this.maps.find(map => map.has(key));
+    const map = this.maps.find((map) => map.has(key));
     if (map) {
       map.delete(key);
       if (map.size === 0) {
-        this.maps = this.maps.filter(m => m !== map);
+        this.maps = this.maps.filter((m) => m !== map);
       }
       return true;
     }
     return false;
   };
-  public keys = () => [].concat(...this.maps.map(map => [...map.keys()]));
-  public values = () => [].concat(...this.maps.map(map => [...map.values()]));
-  public items = () => [].concat(...this.maps.map(map => [...map.entries()]));
+  public keys = () => [].concat(...this.maps.map((map) => [...map.keys()]));
+  public values = () => [].concat(...this.maps.map((map) => [...map.values()]));
+  public items = () => [].concat(...this.maps.map((map) => [...map.entries()]));
   public forEach = (
     callbackfn: (value: V, key: K, map: Map<K, V>) => void,
     thisArg?: any
-  ): void => this.maps.forEach(map => map.forEach(callbackfn, thisArg));
+  ): void => this.maps.forEach((map) => map.forEach(callbackfn, thisArg));
   public clear = () => {
-    this.maps.forEach(map => map.clear());
+    this.maps.forEach((map) => map.clear());
     this.maps = [new Map()];
   };
 }
@@ -243,7 +240,7 @@ export class Hashset<K> {
   public put = (key: K) => (this.hashes[this.hash(key)] = true);
   public has = (key: K): boolean => this.hashes[this.hash(key)] !== undefined;
   public remove = (key: K): boolean => delete this.hashes[this.hash(key)];
-  public items = (): K[] => Object.keys(this.hashes).map(e => this.unhash(e));
+  public items = (): K[] => Object.keys(this.hashes).map((e) => this.unhash(e));
   public size = (): number => Object.keys(this.hashes).length;
   public clear = () => (this.hashes = {});
 }

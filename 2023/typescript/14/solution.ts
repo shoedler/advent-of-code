@@ -1,6 +1,6 @@
 import { log } from "console";
 import * as fs from "fs";
-import { Hashset, runPart } from "../../../lib";
+import { Hashmap, Hashset, runPart } from "../../../lib";
 console.clear();
 
 type Vec = [number, number];
@@ -12,13 +12,12 @@ const south = (v: Vec) => [v[0], v[1] + 1] as Vec;
 const east = (v: Vec) => [v[0] + 1, v[1]] as Vec;
 const west = (v: Vec) => [v[0] - 1, v[1]] as Vec;
 
-const DIRS = [north, west, south, east];
-
+const DIRS = { north, west, south, east };
 const CUBES = new Hashset<Vec>(hash, unhash);
 const ROCKS = new Hashset<Vec>(hash, unhash);
 
 const data = fs
-  .readFileSync("./sample.txt", "utf8")
+  .readFileSync("./input.txt", "utf8")
   .split("\r\n")
   .map((line, y) =>
     line.split("").map((c, x) => {
@@ -63,19 +62,38 @@ const printMap = (rocks: Hashset<Vec>) => {
   }
 };
 
-const simulate = (dir: (typeof DIRS)[0], rocks: Hashset<Vec>): Hashset<Vec> => {
+const simulate = (
+  dir: keyof typeof DIRS,
+  rocks: Hashset<Vec>
+): Hashset<Vec> => {
   let moved = false;
+  const dirFn = DIRS[dir];
   do {
     let next = new Hashset<Vec>(hash, unhash);
     const current = rocks.items();
     moved = false;
     for (const [x, y] of current) {
-      const nextPos = dir([x, y]);
-      if (y === 0 || y === ROWS - 1 || x === 0 || x === COLS - 1) {
+      if (y === 0 && dir === "north") {
         next.put([x, y]);
         continue;
       }
 
+      if (y === ROWS - 1 && dir === "south") {
+        next.put([x, y]);
+        continue;
+      }
+
+      if (x === 0 && dir === "west") {
+        next.put([x, y]);
+        continue;
+      }
+
+      if (x === COLS - 1 && dir === "east") {
+        next.put([x, y]);
+        continue;
+      }
+
+      const nextPos = dirFn([x, y]);
       if (CUBES.has(nextPos)) {
         next.put([x, y]);
         continue;
@@ -98,49 +116,63 @@ const simulate = (dir: (typeof DIRS)[0], rocks: Hashset<Vec>): Hashset<Vec> => {
 };
 
 const partOne = () => {
-  const final = simulate(north, ROCKS);
+  const final = simulate("north", ROCKS);
   return calcSum(final);
 };
 
 const partTwo = () => {
-  const sums: number[] = [];
-  const strSums: string[] = [];
-  let dir = 0;
-  let next = ROCKS;
-  let strSum = [];
-  printMap(next);
-  do {
-    const currentDir = DIRS[dir];
-    dir = (dir + 1) % DIRS.length;
+  const dirs = Object.keys(DIRS) as (keyof typeof DIRS)[];
 
-    next = simulate(currentDir, next);
-    const sum = calcSum(next);
+  const cylce = (rocks: Hashset<Vec>) => {
+    let next = rocks;
+    let sums = [];
 
-    // log("DIR", dir);
-    // printMap(next);
-    log(dir);
-    if (dir === 0) {
-      const str = strSum.join(",");
-      log(str);
-      if (strSums.includes(str)) {
-        strSums.push(str);
-        break;
-      }
-      strSums.push(str);
-      strSum = [];
-    } else {
-      strSum.push(sum);
+    for (const dir of dirs) {
+      next = simulate(dir, next);
+      const sum = calcSum(next);
+      sums.push(sum);
     }
 
-    // if (sums.includes(sum)) {
-    //   sums.push(sum);
-    //   break;
-    // }
-    // sums.push(sum);
-  } while (true);
+    return {
+      sums,
+      next,
+    };
+  };
 
-  log("SUMS", strSums);
+  let cycles = 0;
+  let next = ROCKS;
+  const cycleResults = new Hashmap<string, number>(
+    (key) => key,
+    (key) => key
+  );
+
+  for (;;) {
+    let result = cylce(next);
+
+    cycles++;
+    const cycleSum = result.sums.join(",");
+    next = result.next;
+
+    if (cycleResults.has(cycleSum)) {
+      const target = 1_000_000_000;
+      const rest = target - cycles;
+      const cycleStart = cycleResults.get(cycleSum);
+      const cycleLength = cycles - cycleStart;
+
+      const remainder = rest % cycleLength;
+      const x = remainder + cycleStart;
+
+      for (const [key, value] of cycleResults.items()) {
+        if (value === x) {
+          log(key);
+          return key.split(",").map(Number)[3];
+        }
+      }
+    }
+
+    cycleResults.put(cycleSum, cycles);
+  }
 };
 
-runPart("One", partOne); // 110677 took 57.2498ms, allocated -0.416096MB on the vm-heap.
-runPart("Two", partTwo); //
+runPart("One", partOne); // 110677 took 65.805300ms, allocated 0.33488MB on the vm-heap.
+runPart("Two", partTwo); // 90551 took 29s 60.308300ms, allocated 76.65912MB on the vm-heap.
