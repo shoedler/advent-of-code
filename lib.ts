@@ -27,7 +27,9 @@ export const runPart = (
   );
 
   console.log(
-    `Part ${part}: ${result} took ${perfInfo.duration}, allocated ${perfInfo.heapMegabytesUsed}MB on the vm-heap.`
+    `Part ${part}:`,
+    result,
+    `took ${perfInfo.duration}, allocated ${perfInfo.heapMegabytesUsed}MB on the vm-heap.`
   );
 
   if (showPerfInfo) {
@@ -122,6 +124,15 @@ declare global {
      * @returns {T[]} The array
      */
     take(n: number): T[];
+
+    /**
+     * Sum of all elements in the array.
+     * If the array is empty, returns `0`.
+     *
+     * @template T
+     * @returns {number} The sum of all elements in the array.
+     */
+    sum(): number;
   }
 }
 
@@ -137,6 +148,10 @@ Array.prototype.tap = function <T>(
 Array.prototype.take = function <T>(n: number): T[] {
   if (n > 0) return this.slice(0, n);
   return this.slice(n);
+};
+
+Array.prototype.sum = function <T>(): number {
+  return this.reduce((acc, curr) => acc + curr, 0);
 };
 
 /**
