@@ -11,12 +11,7 @@ const DIRS = {
   W: [-1, 0],
 };
 
-type Dir = keyof typeof DIRS;
-type x = number;
-type y = number;
-type LAZOOR = [x, y, Dir];
-
-const DEFLECTIONMAP: any = {
+const DEFLECTIONS: any = {
   "/": {
     N: ["E"],
     S: ["W"],
@@ -40,11 +35,16 @@ const DEFLECTIONMAP: any = {
   ".": {},
 };
 
-const next = (current: LAZOOR, tile: string): LAZOOR[] => {
+type Dir = keyof typeof DIRS;
+type X = number;
+type Y = number;
+type LAZOOR = [X, Y, Dir];
+
+const nextBeamPos = (current: LAZOOR, tile: string): LAZOOR[] => {
   const [x, y, dir] = current;
   let newDirs: Dir[] = [dir];
 
-  const deflections = DEFLECTIONMAP[tile];
+  const deflections = DEFLECTIONS[tile];
   if (dir in deflections) {
     newDirs = deflections[dir];
   }
@@ -57,10 +57,10 @@ const next = (current: LAZOOR, tile: string): LAZOOR[] => {
 
 const simulateBeam = (lazerEntrypoint: LAZOOR) => {
   const energized: { [key: `${number},${number}`]: Dir[] } = {};
-  const lazers: LAZOOR[] = [lazerEntrypoint];
+  const beams: LAZOOR[] = [lazerEntrypoint];
 
-  while (lazers.length > 0) {
-    const [x, y, dir] = lazers.pop();
+  while (beams.length > 0) {
+    const [x, y, dir] = beams.pop();
     const key = `${x},${y}`;
 
     const wasThere = energized[key];
@@ -78,37 +78,31 @@ const simulateBeam = (lazerEntrypoint: LAZOOR) => {
     }
 
     const tile = grid[y][x];
-    lazers.push(...next([x, y, dir], tile));
+    beams.push(...nextBeamPos([x, y, dir], tile));
   }
 
   return Object.keys(energized).length;
 };
 
-const bestLaser = () => {
+const maxEnergized = () => {
   const results: number[] = [];
 
-  // Left and right
-  [
-    [0, "E"],
-    [grid[0].length - 1, "W"],
-  ].forEach(([x, dir]) => {
-    for (let y = 0; y < grid.length; y++) {
-      results.push(simulateBeam([x, y, dir] as LAZOOR));
-    }
-  });
+  const leftEntryPoint = (y: number) => [0, y, "E"] as LAZOOR;
+  const rightEntryPoint = (y: number) => [grid[0].length - 1, y, "W"] as LAZOOR;
+  for (let y = 0; y < grid.length; y++) {
+    results.push(simulateBeam(leftEntryPoint(y)));
+    results.push(simulateBeam(rightEntryPoint(y)));
+  }
 
-  // Top and bottom
-  [
-    [0, "S"],
-    [grid.length - 1, "N"],
-  ].forEach(([y, dir]) => {
-    for (let x = 0; x < grid[0].length; x++) {
-      results.push(simulateBeam([x, y, dir] as LAZOOR));
-    }
-  });
+  const topEntryPoint = (x: number) => [x, 0, "S"] as LAZOOR;
+  const bottomEntryPoint = (x: number) => [x, grid.length - 1, "N"] as LAZOOR;
+  for (let x = 0; x < grid[0].length; x++) {
+    results.push(simulateBeam(topEntryPoint(x)));
+    results.push(simulateBeam(bottomEntryPoint(x)));
+  }
 
   return Math.max(...results);
 };
 
 runPart("One", () => simulateBeam([0, 0, "E"])); // 7884 took 11.082400ms, allocated -2.411536MB on the vm-heap.
-runPart("Two", () => bestLaser()); // 8185 took 1s 19.815200ms, allocated 293.865728MB on the vm-heap.
+runPart("Two", () => maxEnergized()); // 8185 took 1s 19.815200ms, allocated 293.865728MB on the vm-heap.

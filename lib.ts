@@ -87,7 +87,7 @@ export const tryOrDefault = <T>(fn: () => T, fallback: T): T => {
  * Creates an array of numbers in the specified range.
  *
  * @param {number} from - The start of the range. If greater than `to`, the range will be in descending order.
- * @param {number} to - The end of the range. If less than `from`, the range will be in descending order.
+ * @param {number} to - The end of the range, inclusive. If less than `from`, the range will be in descending order.
  * @returns {number[]}
  * @example
  * range(1, 5); // [1, 2, 3, 4, 5]
@@ -231,7 +231,7 @@ export class Hashmap<K, V> {
   ) {}
   public put = (key: K, value: V) => (this.hashes[this.hash(key)] = value);
   public has = (key: K): boolean => this.hashes[this.hash(key)] !== undefined;
-  public get = (key: K): V => this.hashes[this.hash(key)];
+  public get = (key: K): V | undefined => this.hashes[this.hash(key)];
   public items = (): [K, V][] =>
     Object.entries(this.hashes).map(([k, v]) => [this.unhash(k), v]);
   public values = (): V[] => Object.values(this.hashes);
