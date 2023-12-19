@@ -133,6 +133,15 @@ declare global {
      * @returns {number} The sum of all elements in the array.
      */
     sum(): number;
+
+    /**
+     * Multiplies all elements in the array.
+     * If the array is empty, returns `1`.
+     *
+     * @template T
+     * @returns {number} The product of all elements in the array.
+     */
+    product(): number;
   }
 }
 
@@ -152,6 +161,10 @@ Array.prototype.take = function <T>(n: number): T[] {
 
 Array.prototype.sum = function <T>(): number {
   return this.reduce((acc, curr) => acc + curr, 0);
+};
+
+Array.prototype.product = function <T>(): number {
+  return this.reduce((acc, curr) => acc * curr, 1);
 };
 
 /**
