@@ -3,13 +3,13 @@ import "node:process";
 /**
  * Runs the specified function and logs its result, execution time, and heap usage to the console.
  *
- * @param {('One' | 'Two')} part - The part of the Advent of Code challenge being solved.
+ * @param {('One' | 'Two' | 'OneAndTwo')} part - The part of the Advent of Code challenge being solved.
  * @param {Function} fn - The function to run.
  * @param {boolean} [showPerfInfo=false] - Whether to show detailed performance information in addition to the summary log.
  * @returns {void}
  */
 export const runPart = (
-  part: "One" | "Two",
+  part: "One" | "Two" | "OneAndTwo",
   fn: () => any,
   showPerfInfo: boolean = false
 ) => {
@@ -26,11 +26,23 @@ export const runPart = (
     endHeapBytesUsed - startHeapBytesUsed
   );
 
-  console.log(
-    `Part ${part}:`,
-    result,
-    `took ${perfInfo.duration}, allocated ${perfInfo.heapMegabytesUsed}MB on the vm-heap.`
-  );
+  const log = (part: string, result: any) =>
+    console.log(
+      `Part ${part}:`,
+      result,
+      `took ${perfInfo.duration}, allocated ${perfInfo.heapMegabytesUsed}MB on the vm-heap.`
+    );
+
+  if (Array.isArray(result) && part === "OneAndTwo") {
+    console.assert(
+      result.length === 2,
+      "Expected result to be an array of length 2."
+    );
+    log("One", result[0]);
+    log("Two", result[1]);
+  } else {
+    log(part, result);
+  }
 
   if (showPerfInfo) {
     console.log(perfInfo);
@@ -265,6 +277,11 @@ export class Hashset<K> {
     private hash: (key: K) => string = JSON.stringify,
     private unhash: (key: string) => K = JSON.parse
   ) {}
+  public static from<K>(old: Hashset<K>) {
+    const new_ = new Hashset<K>(old.hash, old.unhash);
+    new_.hashes = { ...old.hashes };
+    return new_;
+  }
   public put = (key: K) => (this.hashes[this.hash(key)] = true);
   public has = (key: K): boolean => this.hashes[this.hash(key)] !== undefined;
   public remove = (key: K): boolean => delete this.hashes[this.hash(key)];
