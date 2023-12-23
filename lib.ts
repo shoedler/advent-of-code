@@ -260,6 +260,13 @@ export class Hashmap<K, V> {
   public items = (): [K, V][] =>
     Object.entries(this.hashes).map(([k, v]) => [this.unhash(k), v]);
   public values = (): V[] => Object.values(this.hashes);
+  public entries = (): [K, V][] => {
+    const entries: [K, V][] = [];
+    for (const k of Object.keys(this.hashes)) {
+      entries.push([this.unhash(k), this.hashes[k]]);
+    }
+    return entries;
+  };
   public size = (): number => Object.keys(this.hashes).length;
   public clear = () => (this.hashes = {});
 }
