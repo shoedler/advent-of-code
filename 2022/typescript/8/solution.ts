@@ -49,4 +49,4 @@ const visibilityMapString = visibilityMap
     .map(x => x ? '♣' : ' ')
     .join('') + '\r\n', "");
 
-fs.writeFileSync('./out.txt', visibilityMapString)
+fs.writeFileSync('./output.txt', visibilityMapString)
