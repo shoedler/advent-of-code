@@ -6,32 +6,8 @@ const nums = File
   .split("\r\n")
   .map(fn (line) -> line.split("   ").map(Int))
 
-const L = nums.map(fn (p) -> p[0])
-const R = nums.map(fn (p) -> p[1])
-
-// No sorting yet, so we need to do it manually
-fn bubble(arr) {
-  let swp = false
-  const n = arr.len
-
-  for let i = 0; i < n-1; i++; {
-    swp = false
-    for let j = 0; j < n-i-1; j++; {
-      if arr[j] > arr[j+1] {
-        const tmp = arr[j]
-        arr[j] = arr[j+1]
-        arr[j+1] = tmp
-        swp = true
-      }
-    }
-
-    if swp == false
-      skip
-  }
-}
-
-bubble(L)
-bubble(R)
+const L = nums.map(fn (p) -> p[0]).sort()
+const R = nums.map(fn (p) -> p[1]).sort()
 
 const p1 = L
   .map(fn (l, i) -> Math.abs(l-R[i]))

@@ -7,10 +7,9 @@ const nums = File
   .map(fn (line) -> line.split(" ").map(Int))
 
 const is_safe = fn (rep) {
-  const diff = rep.map(fn (e,i) -> i <rep.len-1 ? rep[i+1] - e : nil)
-  diff.pop()
-  ret diff.every(fn (x) -> x <= -1 and x >= -3) or 
-    diff.every(fn (x) -> x >= 1 and x <= 3)
+  const diff = rep.map(fn (e,i) -> try rep[i+1]-e else nil)[..-1]
+  ret diff.every(fn (x) -> x in [-3,-2,-1]) or 
+      diff.every(fn (x) -> x in [1,2,3])
 }
 
 const is_safe_tol = fn (rep) {
@@ -23,6 +22,5 @@ const is_safe_tol = fn (rep) {
   ret reps.some(is_safe)
 }
 
-log("Part 1", nums.sift(is_safe).len)
-log("Part 2", nums.sift(is_safe_tol).len)
-
+log("Part 1", nums.sift(is_safe).len) // Part 1 686
+log("Part 2", nums.sift(is_safe_tol).len) // Part 2 717
