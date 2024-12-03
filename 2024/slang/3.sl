@@ -1,5 +1,8 @@
 import File
 import Math
+import Perf
+
+fn time_ms(start) -> (Perf.since(start) * 1000).to_str() + "ms"
 
 const digits = "0123456789"
 
@@ -13,14 +16,12 @@ fn run(do_enable) {
 
   fn is_digit() -> prg[i] in digits
 
-  fn check(n) -> prg[i] == n
+  fn check(str) -> prg[i..i+str.len] == str
 
-  fn cmd(name) {
-    if prg[i..i+name.len] == name {
-      i += name.len
-      ret true
-    }
-    ret false
+  fn match(str) {
+    if !check(str) ret false
+    i += str.len
+    ret true
   }
 
   fn num() {
@@ -33,16 +34,13 @@ fn run(do_enable) {
   }
 
   for ; i < prg.len; i++ ; {
-    if do_enable and cmd("don't()") {
-      enable = false
-    }
-    if do_enable and cmd("do()") {
-      enable = true
-    }
-    if cmd("mul(") {
-      let a = num()
-      if !cmd(",") skip
-      let b = num()
+    if do_enable and match("don't()") enable = false
+    if do_enable and match("do()") enable = true
+    
+    if match("mul(") {
+      const a = num()
+      if !match(",") skip
+      const b = num()
       if !check(")") skip
       if enable 
         res += Int(a) * Int(b)
@@ -51,5 +49,7 @@ fn run(do_enable) {
   ret res
 }
 
-log("Part 1", run(false)) // Part 1 168539636
-log("Part 2", run(true)) // Part 2 97529391
+let start = Perf.now()
+log("Part 1", run(false), "took " + time_ms(start)) // Part 1 168539636 took 3.53420001920313ms
+start = Perf.now()
+log("Part 2", run(true), "took " + time_ms(start)) // Part 2 97529391 took 5.9828000376001ms
