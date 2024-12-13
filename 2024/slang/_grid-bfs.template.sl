@@ -10,6 +10,9 @@ const ROWS = grid.len
 const COLS = grid[0].len
 const DIRS = [ (-1, 0), (0,1), (1,0), (0,-1) ]
 
+let p1 = 0 
+let p2 = 0
+
 for let y = 0; y < ROWS; y++; {
   for let x = 0; x < COLS; x++; {
 
