@@ -13,9 +13,23 @@ const DIRS = [ (-1, 0), (0,1), (1,0), (0,-1) ]
 let p1 = 0 
 let p2 = 0
 
+// init smth
+let p = {}
+grid.each(fn(row, y) -> 
+  row.each(fn(cell, x) -> 
+    p[cell] ? p[cell].push((y,x)) : (p[cell] = [(y,x)])))
+
+// find some starting point
+fn start_i(r) -> "^" in r
+fn not_nil(x) -> x != nil
+const start = (
+  grid.pos(start_i), 
+  grid.map(fn (r) -> r.pos(start_i)).first(not_nil)
+)
+
+// bfs
 for let y = 0; y < ROWS; y++; {
   for let x = 0; x < COLS; x++; {
-
     const Q = [(y,x)]
     const SEEN = {}
     while Q.len > 0 {
