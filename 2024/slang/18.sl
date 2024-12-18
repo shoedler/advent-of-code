@@ -61,6 +61,6 @@ bytes.some(fn(byte, i) {
 })
 
 log("Part 1: ", p1) // Part 1:  262
-log("Part 2: ", p2) // Part 2:  2973
+log("Part 2: ", p2) // Part 2:  22,20
 
 
