@@ -20,11 +20,11 @@ fn combos(design) {
     if start == towel 
       ways += combos(design[towel.len..])
   }
-  
+
   DP[design] = ways
   ret ways
 }
 
 const ways = DESIGNS.map(fn(d) -> combos(d))
-log("Part 1:", ways.sift(fn(c) -> c>0).len) // Part 1: 
-log("Part 2:", ways.sum()) // Part 2: 
+log("Part 1:", ways.sift(fn(c) -> c>0).len) // Part 1: 315
+log("Part 2:", ways.sum()) // Part 2: 625108891232249
