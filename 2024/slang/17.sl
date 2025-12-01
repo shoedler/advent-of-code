@@ -61,7 +61,7 @@ fn calc(target, ans) {
   if target.len == 0 ret ans
   let [a,b,c] = [0,0,0]
   for let t=0; t<8; t++; {
-    a = Math.bit_or(Math.shl(ans, 3), t)
+    a = Math.bor(Math.shl(ans, 3), t)
 
     b = a%8
     b = Math.xor(b, 1)
