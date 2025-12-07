@@ -1,4 +1,3 @@
-
 import File
 
 const G = File
@@ -24,9 +23,9 @@ fn splits(spos) {
     const pos = Q.yank(0)
     let (r,c) = pos
 
-    if r >= G.len-1 skip
-    if G[r+1][c]=="." enq((r+1,c))
-    if G[r+1][c]=="^" {
+    if r+1==G.len skip
+    else if G[r+1][c]=="." enq((r+1,c))
+    else {
       ++splits
       enq((r+1,c-1))
       enq((r+1,c+1))
